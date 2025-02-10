@@ -1,0 +1,2 @@
+"0","#clean the enviroment"
+"0","rm(list = ls())"

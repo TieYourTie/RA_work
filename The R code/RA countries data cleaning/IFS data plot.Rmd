@@ -1,0 +1,726 @@
+---
+title: "IFS plot graph"
+output: pdf_document
+date: "2024-11-25"
+---
+
+
+```{R include=FALSE}
+#clean the enviroment
+rm(list = ls())
+```
+
+```{r include=FALSE}
+library (lubridate)     #the time series processing package
+library (cansim)        #provides easy access to the statistics canada data tale
+library (WDI)           #Accesses data from the world development indicators
+library (fredr)         #provide an interface to the federal reserve economic data API
+library (tsbox)         #Make time series convverstion, aggregation and plotting simple
+library (RColorBrewer)  #color palettes for R graphics
+library(wesanderson)    #Provides color palettes inspired by Wes Anderson films.
+library(writexl)        #Writes data frames to Excel files.
+library(tidyr)          #Tidies messy data   
+library(xts)            #Extensible time series class for R   
+library(dplyr)          #Data manipulation and transformation.
+library(openxlsx)       #Read, write, and edit Excel files.
+library(ggplot2)
+library(ggthemes)
+library(dplyr) 
+library(ggthemes)
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+
+```
+
+```{r echo=FALSE}
+
+#IFS
+IFS_stage_one_QD <- read_excel("IFS_stage_one_regresison_QD.xlsx")
+IFS_stage_one_HP <-read_excel("IFS_stage_one_regresison_HP.xlsx")
+
+```
+
+
+```{r IFS_QD, echo=FALSE}
+
+ IFS_stage_one_QD <- IFS_stage_one_QD %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+IFS_stage_one_QD_filter <- IFS_stage_one_QD %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+```
+
+```{r IFS QD no filter, echo=FALSE}
+
+ IFS_stage_one_QD <- IFS_stage_one_QD %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+IFS_stage_one_QD_filter <- IFS_stage_one_QD %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow(IFS_stage_one_QD)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow(IFS_stage_one_QD_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <- IFS_stage_one_QD %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot(IFS_stage_one_QD, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs Average Inflation(IFS QD)",
+    x = "Average Inflation",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: IFS")
+  ) +
+  ylim(
+    min(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) - 0.1,
+    max(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+  
+```
+
+```{r IFS QD log_average_inflation, echo=FALSE}
+# Calculate the number of countries for IFS
+n_IFS<- nrow(IFS_stage_one_QD)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow(IFS_stage_one_QD_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <- IFS_stage_one_QD %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+ggplot(IFS_stage_one_QD, aes(y = Persistence_effect, x = log_average_inflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs log average inflation (IFS QD)",
+    x = "Average Inflation (log)",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: IFS")
+  ) +
+  ylim(
+    min(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) - 0.1,
+    max(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+  
+```
+
+
+```{r IFS log QD, echo=FALSE}
+
+ IFS_stage_one_QD <- IFS_stage_one_QD %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+IFS_stage_one_QD_filter <- IFS_stage_one_QD %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow(IFS_stage_one_QD)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow(IFS_stage_one_QD_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <- IFS_stage_one_QD %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot(IFS_stage_one_QD, aes(y = Persistence_effect, x = log_average_inflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs log average inflation (IFS QD)",
+    x = "Average Inflation (log)",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: IFS")
+  ) +
+  ylim(
+    min(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) - 0.1,
+    max(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+```
+
+```{r IFS standard QD, echo=FALSE}
+
+ IFS_stage_one_QD <- IFS_stage_one_QD %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+IFS_stage_one_QD_filter <- IFS_stage_one_QD %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow(IFS_stage_one_QD)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow(IFS_stage_one_QD_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <- IFS_stage_one_QD %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot(IFS_stage_one_QD, aes(y = Persistence_effect, x =average_inflation_Standard)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs Average Inflation Standard (IFS QD)",
+    x = "Average Inflation Standard",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: IFS")
+  ) +
+  ylim(
+    min(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) - 0.1,
+    max(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+```
+
+```{r IFS demean QD, echo=FALSE}
+
+ IFS_stage_one_QD <- IFS_stage_one_QD %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+IFS_stage_one_QD_filter <- IFS_stage_one_QD %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow(IFS_stage_one_QD)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow(IFS_stage_one_QD_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <- IFS_stage_one_QD %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+ggplot(IFS_stage_one_QD, aes(y = Persistence_effect, x = average_inflation_demean)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs Average Inflation Demean (IFS QD)",
+    x = "Average Inflation Demean",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: IFS")
+  ) +
+  ylim(
+    min(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) - 0.1,
+    max(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+```
+
+```{r IFS demedian QD ,echo=FALSE}
+
+ IFS_stage_one_QD <- IFS_stage_one_QD %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+IFS_stage_one_QD_filter <- IFS_stage_one_QD %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow(IFS_stage_one_QD)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow(IFS_stage_one_QD_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <- IFS_stage_one_QD %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot(IFS_stage_one_QD, aes(y = Persistence_effect, x = average_inflation_demedian)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs Average Inflation Demedian (IFS QD)",
+    x = "Average Inflation Demedian",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: IFS")
+  ) +
+  ylim(
+    min(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) - 0.1,
+    max(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+```
+
+```{r IFS min_max QD ,echo=FALSE}
+
+ IFS_stage_one_QD <- IFS_stage_one_QD %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+IFS_stage_one_QD_filter <- IFS_stage_one_QD %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow(IFS_stage_one_QD)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow(IFS_stage_one_QD_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <- IFS_stage_one_QD %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot(IFS_stage_one_QD, aes(y = Persistence_effect, x = average_inflatin_min_max)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs Average Inflatin min-max (IFS QD)",
+    x = "Average Inflatin min-max",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: IFS")
+  ) +
+  ylim(
+    min(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) - 0.1,
+    max(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+```
+
+```{r IFS filter QD,echo=FALSE}
+
+ IFS_stage_one_QD <- IFS_stage_one_QD %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+IFS_stage_one_QD_filter <- IFS_stage_one_QD %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow(IFS_stage_one_QD)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow(IFS_stage_one_QD_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <- IFS_stage_one_QD %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot(IFS_stage_one_QD_filter, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs Average Inflation filter (IFS QD)",
+    x = "AverageInflation",
+    y = "Persistence",
+    caption = paste("n =", n_IFS_filter, "\nData source: IFS")
+  ) +
+  ylim(
+    min(IFS_stage_one_QD_filter$Persistence_effect, na.rm = TRUE) - 0.1,
+    max(IFS_stage_one_QD_filter $Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+```
+
+```{r IFS HP no filter ,echo=FALSE}
+
+#clean the enviroment
+rm(list = ls())
+
+IFS_stage_one_HP <-read_excel("IFS_stage_one_regresison_HP.xlsx")
+
+IFS_stage_one_HP <-IFS_stage_one_HP %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+ IFS_stage_one_HP_filter <-  IFS_stage_one_HP %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow( IFS_stage_one_HP)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow( IFS_stage_one_HP_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <-  IFS_stage_one_HP %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot( IFS_stage_one_HP, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs Average Inflation(IFS HP)",
+    x = "Average Inflation",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: IFS")
+  ) +
+  ylim(
+    min( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) - 0.1,
+    max( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+  
+```
+
+```{r IFS log HP,echo=FALSE }
+
+  IFS_stage_one_HP <-  IFS_stage_one_HP %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+ IFS_stage_one_HP_filter <-  IFS_stage_one_HP %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow( IFS_stage_one_HP)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow( IFS_stage_one_HP_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <-  IFS_stage_one_HP %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot( IFS_stage_one_HP, aes(y = Persistence_effect, x = log_average_inflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs log average inflation (IFS HP)",
+    x = "Average Inflation (log)",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: IFS")
+  ) +
+  ylim(
+    min( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) - 0.1,
+    max( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+```
+
+```{r IFS standard HP ,echo=FALSE}
+
+  IFS_stage_one_HP <-  IFS_stage_one_HP %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+ IFS_stage_one_HP_filter <-  IFS_stage_one_HP %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow( IFS_stage_one_HP)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow( IFS_stage_one_HP_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <-  IFS_stage_one_HP %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot( IFS_stage_one_HP, aes(y = Persistence_effect, x =average_inflation_Standard)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs Average Inflation Standard (IFS HP)",
+    x = "Average Inflation Standard",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: IFS")
+  ) +
+  ylim(
+    min( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) - 0.1,
+    max( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+```
+
+```{r IFS demean HP ,echo=FALSE}
+
+  IFS_stage_one_HP <-  IFS_stage_one_HP %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+ IFS_stage_one_HP_filter <-  IFS_stage_one_HP %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow( IFS_stage_one_HP)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow( IFS_stage_one_HP_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <-  IFS_stage_one_HP %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot( IFS_stage_one_HP, aes(y = Persistence_effect, x = average_inflation_demean)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs Average Inflation Demean (IFS HP)",
+    x = "Average Inflation Demean",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: HP")
+  ) +
+  ylim(
+    min( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) - 0.1,
+    max( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+```
+
+```{r IFS demedian HP ,echo=FALSE}
+
+  IFS_stage_one_HP <-  IFS_stage_one_HP %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+ IFS_stage_one_HP_filter <-  IFS_stage_one_HP %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow( IFS_stage_one_HP)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow( IFS_stage_one_HP_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <-  IFS_stage_one_HP %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot( IFS_stage_one_HP, aes(y = Persistence_effect, x = average_inflation_demedian)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs Average Inflation Demedian (IFS HP)",
+    x = "Average Inflation Demedian",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: HP")
+  ) +
+  ylim(
+    min( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) - 0.1,
+    max( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+```
+
+```{r IFS min_max HP,echo=FALSE}
+
+  IFS_stage_one_HP <-  IFS_stage_one_HP %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+ IFS_stage_one_HP_filter <-  IFS_stage_one_HP %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow( IFS_stage_one_HP)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow( IFS_stage_one_HP_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <-  IFS_stage_one_HP %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot( IFS_stage_one_HP, aes(y = Persistence_effect, x = average_inflatin_min_max)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs Average Inflatin min-max (IFS HP)",
+    x = "Average Inflatin min-max",
+    y = "Persistence",
+    caption = paste("n =", n_IFS, "\nData source: IFS")
+  ) +
+  ylim(
+    min( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) - 0.1,
+    max( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+```
+
+```{r IFS filter HP,echo=FALSE}
+
+  IFS_stage_one_HP <-  IFS_stage_one_HP %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+ IFS_stage_one_HP_filter <-  IFS_stage_one_HP %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+
+# Calculate the number of countries for IFS
+n_IFS<- nrow( IFS_stage_one_HP)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow( IFS_stage_one_HP_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <-  IFS_stage_one_HP %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+
+ggplot( IFS_stage_one_HP_filter, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence vs Average Inflation filter (IFS HP)",
+    x = "AverageInflation",
+    y = "Persistence",
+    caption = paste("n =", n_IFS_filter, "\nData source: IFS")
+  ) +
+  ylim(
+    min( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) - 0.1,
+    max( IFS_stage_one_HP$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+```

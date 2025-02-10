@@ -1,0 +1,32 @@
+"0","#now, its the time to deal with the democeratic statstis"
+"0",""
+"0","#lode the data "
+"0",""
+"0","library(readxl)"
+"0","library(readr)"
+"0",""
+"0","Cleaned_Democracy_Data <- read_csv(""~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/The countries and democratic list check list/Cleaned_Democracy_Data.csv"")"
+"1","[38;5;232mNew names:
+[36m•[38;5;232m `` -> `...1`[39m
+"
+"1","[1mRows: [22m[34m135[39m [1mColumns: [22m[34m8[39m
+"
+"1","[36m──[39m [1mColumn specification[22m [36m──────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+[1mDelimiter:[22m "",""
+[31mchr[39m (2): Country, ISO.3166-1_Alpha-3
+[32mdbl[39m (6): ...1, UN_member, 2023_EIU_democracy_index, 2023_level_of_democracy, Development_Status, Democracy_Level
+"
+"1","
+[36mℹ[39m Use `spec()` to retrieve the full column specification for this data.
+[36mℹ[39m Specify the column types or set `show_col_types = FALSE` to quiet this message.
+"
+"0","Corrected_UN_countries_list_with_ISO_codes <- read_excel(""~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/The countries and democratic list check list/Corrected_UN_countries_list_with_ISO_codes.xlsx"")"
+"0",""
+"0","Merged_WB_UN_data_iso_marked <- read_excel(""~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/The countries and democratic list check list/Merged_WB_UN_data_iso_marked.xlsx"")"
+"0",""
+"0","Updated_Merged_WB_UN_data_filled_ISO <- read_excel(""~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/The countries and democratic list check list/Updated_Merged_WB_UN_data_filled_ISO.xlsx"")"
+"0",""
+"0","Updated_Merged_WB_UN_data_with_NA <- read_excel(""~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/The countries and democratic list check list/Updated_Merged_WB_UN_data_with_NA.xlsx"")"
+"0",""
+"0",""
+"0",""

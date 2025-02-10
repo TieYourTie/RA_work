@@ -1,0 +1,3 @@
+"0","#put two data set together"
+"0","IFS_na_raw <- IFS_gross_GDP_long %>% "
+"0","  left_join(IFS_real_GDP_long, by = c(""Country"", ""Year""))"

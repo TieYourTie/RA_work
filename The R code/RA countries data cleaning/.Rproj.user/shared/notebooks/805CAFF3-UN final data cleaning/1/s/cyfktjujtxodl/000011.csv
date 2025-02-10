@@ -1,0 +1,7 @@
+"0","# Calculate Inflation Rates (π_t)"
+"0","UN_raw<- UN_raw %>%"
+"0","  arrange(Country, Year) %>%"
+"0","  mutate(Inflation_Rate = ((Price_Level - lag(Price_Level))/ lag(Price_Level))* 100)"
+"0",""
+"0","# Print the resulting data frame"
+"0","print(UN_raw, n = 100)"

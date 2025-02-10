@@ -1,0 +1,10 @@
+"0",""
+"0","#idea"
+"0","beta_0 = 3"
+"0","beta_1 = 5"
+"0","x = c((rep(1:100) - rnorm(100, mean = 2.3412, sd = 3.1412))"
+"0","e = rnorm(100, mean = 0, sd = 1)"
+"2","Error: unexpected symbol in:
+""x = c((rep(1:100) - rnorm(100, mean = 2.3412, sd = 3.1412))
+e""
+"

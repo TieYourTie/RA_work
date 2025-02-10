@@ -1,0 +1,5 @@
+"0","#lode the data "
+"0","#UN"
+"0","UN_stage_one_QD <- read_excel(""UN_stage_one_regresison_QD.xlsx"")"
+"0","UN_stage_one_HP <-read_excel(""UN_stage_one_regresison_HP.xlsx"")"
+"0",""

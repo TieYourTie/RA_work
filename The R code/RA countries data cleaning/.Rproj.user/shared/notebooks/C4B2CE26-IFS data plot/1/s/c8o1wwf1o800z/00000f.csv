@@ -1,0 +1,5 @@
+"0",""
+"0","#IFS"
+"0","IFS_stage_one_QD <- read_excel(""IFS_stage_one_regresison_QD.xlsx"")"
+"0","IFS_stage_one_HP <-read_excel(""IFS_stage_one_regresison_HP.xlsx"")"
+"0",""

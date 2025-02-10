@@ -1,0 +1,5 @@
+"0","#remove the na_col "
+"0",""
+"0","UN_raw <- na.omit(UN_raw)"
+"0",""
+"0","print(UN_raw)"

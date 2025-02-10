@@ -1,0 +1,172 @@
+---
+title: "The final report"
+output:
+  pdf_document: default
+  word_document: default
+date: "2024-11-14"
+---
+
+```{R include=FALSE}
+#clean the enviroment
+rm(list = ls())
+```
+
+
+```{r include=FALSE}
+library (lubridate)     #the time series processing package
+library (cansim)        #provides easy access to the statistics canada data tale
+library (WDI)           #Accesses data from the world development indicators
+library (fredr)         #provide an interface to the federal reserve economic data API
+library (tsbox)         #Make time series convverstion, aggregation and plotting simple
+library (RColorBrewer)  #color palettes for R graphics
+library(wesanderson)    #Provides color palettes inspired by Wes Anderson films.
+library(writexl)        #Writes data frames to Excel files.
+library(tidyr)          #Tidies messy data   
+library(xts)            #Extensible time series class for R   
+library(dplyr)          #Data manipulation and transformation.
+library(openxlsx)       #Read, write, and edit Excel files.
+library(ggplot2)
+library(ggthemes)
+library(dplyr)
+library(ggthemes)
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+```
+
+
+```{r include=FALSE}
+#lode the data 
+#UN
+UN_stage_one_QD <- read_excel("UN_stage_one_regresison_QD.xlsx")
+UN_stage_one_QD <- UN_stage_one_QD %>% mutate(contro = EIU + AveragePopulationGrowth )
+UN_stage_one_HP <-read_excel("UN_stage_one_regresison_HP.xlsx")
+UN_stage_one_HP <- UN_stage_one_HP %>% mutate(contro = EIU + AveragePopulationGrowth )
+
+```
+
+
+```{R echo=TRUE}
+
+
+# Model 1: Persistence_effect vs AverageInflation
+model_one_QD <- lm(Persistence_effect ~ AverageInflation, data = UN_stage_one_QD)
+summary(model_one_QD)
+
+# Model 2: Persistence_effect vs AverageInflation + (EIU + AveragePopulationGrowth)
+model_two_QD<- lm(Persistence_effect ~ AverageInflation + contro, data = UN_stage_one_QD)
+summary(model_two_QD)
+
+# Model 3: Persistence_effect vs AverageInflation for OECD members
+model_three_QD <- lm(Persistence_effect ~ AverageInflation, 
+                  data = UN_stage_one_QD %>% filter(OECD == 1))
+summary(model_three_QD)
+
+# Model 4: Persistence_effect vs AverageInflation for non-OECD members
+model_four_QD<- lm(Persistence_effect ~ AverageInflation, 
+                 data = UN_stage_one_QD %>% filter(OECD == 0))
+summary(model_four_QD)
+
+```
+
+```{r}
+
+
+# Model 5: Persistence_effect vs AverageInflation
+model_five_HP <- lm(Persistence_effect ~ AverageInflation, data = UN_stage_one_HP)
+summary(model_five_HP)
+
+# Model 6: Persistence_effect vs AverageInflation + (EIU + AveragePopulationGrowth)
+model_six_HP<- lm(Persistence_effect ~ AverageInflation + contro, data = UN_stage_one_HP)
+summary(model_six_HP)
+
+# Model 7: Persistence_effect vs AverageInflation for OECD members
+model_seven_HP <- lm(Persistence_effect ~ AverageInflation, 
+                  data = UN_stage_one_HP %>% filter(OECD == 1))
+summary(model_seven_HP)
+
+# Model 8: Persistence_effect vs AverageInflation for non-OECD members
+model_eight_HP <- lm(Persistence_effect ~ AverageInflation, 
+                 data = UN_stage_one_HP %>% filter(OECD == 0))
+summary(model_eight_HP)
+
+
+
+```
+
+```{r UN_HP, eval=FALSE, include=FALSE}
+
+# Repeat for HP datasets
+
+# UN HP
+n_UN_HP <- nrow(UN_stage_one_HP)
+
+UN_stage_one_HP_OECD <- UN_stage_one_HP %>% filter(OECD == 1)
+n_UN_HP_OECD <- nrow(UN_stage_one_HP_OECD)
+
+ggplot(UN_stage_one_HP_OECD , aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence Effect vs Average Inflation (UN HP non-OECD)",
+    x = "Average Inflation",
+    y = "Persistence Effect",
+    caption = paste("n =", n_UN_HP_OECD, "\nData source: United Nations")
+  ) +
+  ylim(min(UN_stage_one_HP_OECD$Persistence_effect) - 0.2, max(UN_stage_one_HP_OECD $Persistence_effect) + 0.2) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5, margin = margin(b = 10)),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic"),
+    plot.margin = margin(t = 20)
+  )
+
+
+```
+
+```{r UN_QD, eval=FALSE, include=FALSE}
+
+# Repeat for HP datasets
+
+# UN HP
+n_UN_QD <- nrow(UN_stage_one_QD)
+
+UN_stage_one_QD_OECD <- UN_stage_one_QD %>% filter(OECD == 1)
+n_UN_QD_OECD <- unique(nrow(UN_stage_one_QD_OECD))
+
+
+ggplot(UN_stage_one_QD_OECD, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence Effect vs Average Inflation (UN QD non-OECD)",
+    x = "Average Inflation",
+    y = "Persistence Effect",
+    caption = paste("n =", n_UN_QD_OECD, "\nData source: United Nations")
+  ) +
+  ylim(min(UN_stage_one_QD_OECD$Persistence_effect) - 0.1, max(UN_stage_one_QD_OECD$Persistence_effect) + 0.1) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5, margin = margin(b = 10)),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic"),
+    plot.margin = margin(t = 20)
+  )
+```
+
+```{R eval=FALSE, include=FALSE}
+#the second regression with the control
+UN_stage_one_QD_with_control <- na.omit(UN_stage_one_QD)
+
+#the control model
+y_QD <- UN_stage_one_QD_with_control$Persistence_effect
+x1_QD <- UN_stage_one_QD_with_control$AverageInflation
+x2_QD_control <- UN_stage_one_QD_with_control$EIU * UN_stage_one_QD_with_control$AveragePopulationGrowth
+
+UN_QD_contro <- lm(y_QD ~ x1_QD + x2_QD_control )
+
+
+```
+
+

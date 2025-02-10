@@ -1,0 +1,12 @@
+"0","UN_data_with_iso <- UN_raw %>%"
+"0","  left_join(ISO_list %>% select(Country, ISO_code), by = ""Country"")"
+"2","Warning in left_join(., ISO_list %>% select(Country, ISO_code), by = ""Country"") :"
+"2","
+ "
+"2"," [38;5;232mDetected an unexpected many-to-many relationship between `x` and `y`.
+[36mℹ[38;5;232m Row 1897 of `x` matches multiple rows in `y`.
+[36mℹ[38;5;232m Row 1 of `y` matches multiple rows in `x`.
+[36mℹ[38;5;232m If a many-to-many relationship is expected, set `relationship = ""many-to-many""` to silence this
+  warning.[39m
+"
+"0","print(UN_data_with_iso)"

@@ -1,0 +1,99 @@
+"0",""
+"0","# 定义数据集、标题和来源"
+"0","datasets <- list(WB_stage_one_QD, WB_stage_one_HP, UN_stage_one_QD, UN_stage_one_HP, "
+"0","                 OECD_stage_one_QD, OECD_stage_one_HP, IFS_stage_one_QD, IFS_stage_one_HP)"
+"0","titles <- c(""WB_Persistence (QD)"", ""WB_Persistence (HP)"", ""UN_Persistence(QD)"", ""UN_Persistence(HP)"", "
+"0","            ""OECD_Persistence(QD)"", ""OECD_Persistence(HP)"", ""IFS_Persistence(QD)"", ""IFS_Persistence(HP)"")"
+"0","sources <- c(""World Bank"", ""World Bank"", ""United Nations"", ""United Nations"", "
+"0","             ""OECD"", ""OECD"", ""IFS"", ""IFS"")"
+"0",""
+"0","# 生成单个图表的函数"
+"0","generate_plot <- function(data, y_var, base_title, source) {"
+"0","  # 计算数据集中国家的数量"
+"0","  n <- nrow(data)"
+"0","  "
+"0","  # 根据变量名动态生成标题"
+"0","  title <- gsub(""Persistence"", ifelse(y_var == ""Impact_effect"", ""Impact"", ""Persistence""), base_title)"
+"0","  "
+"0","  ggplot(data, aes_string(x = ""AverageInflation"", y = y_var)) +"
+"0","    geom_point(color = ""blue"", size = 1.5) +"
+"0","    geom_smooth(method = ""lm"", se = FALSE, color = ""red"") +"
+"0","    labs("
+"0","      title = title,"
+"0","      x = ""Average Inflation"","
+"0","      y = y_var,"
+"0","      caption = paste(""Data source:"", source)"
+"0","    ) +"
+"0","    # 添加国家数量的注释在左下角，位于数据来源的上方"
+"0","    annotate(""text"", x = Inf, y = Inf, label = paste(""Number of countries:"", n), "
+"0","             hjust = 1, vjust = 1.5, size = 3, color = ""grey40"", fontface = ""italic"") +"
+"0","    theme_economist() +"
+"0","    theme("
+"0","      plot.title = element_text(hjust = 0.5, size = 10, margin = margin(b = 5)),"
+"0","      axis.title.x = element_text(size = 8),"
+"0","      axis.title.y = element_text(size = 8),"
+"0","      axis.text = element_text(size = 7),"
+"0","      plot.caption = element_text(hjust = 0, vjust = 1, face = ""italic"", size = 6),"
+"0","      plot.margin = margin(t = 10, b = 10, l = 10, r = 10)"
+"0","    )"
+"0","}"
+"0",""
+"0","# 循环遍历每个数据集、标题和来源以生成图表"
+"0","for (i in 1:length(datasets)) {"
+"0","  data <- datasets[[i]]      # 当前数据集"
+"0","  base_title <- titles[i]     # 对应的基本标题"
+"0","  source <- sources[i]        # 对应的来源"
+"0","  "
+"0","  # 检查数据集中是否包含所需的列"
+"0","  if (""Persistence_effect"" %in% colnames(data) && ""Impact_effect"" %in% colnames(data)) {"
+"0","    persistence_plot <- generate_plot(data, ""Persistence_effect"", base_title, source)"
+"0","    impact_plot <- generate_plot(data, ""Impact_effect"", base_title, source)"
+"0","    "
+"0","    # 将两个图表垂直排列，具有相等的高度"
+"0","    combined_plot <- grid.arrange(persistence_plot, impact_plot, ncol = 1, heights = c(1, 1))"
+"0","    "
+"0","    # 保存组合后的图表，指定尺寸"
+"0","    ggsave(filename = paste0(""combined_plot_"", i, "".png""), plot = combined_plot, width = 8, height = 20)"
+"0","  } else {"
+"0","    message(paste(""跳过数据集"", base_title, ""因为缺少必要的列。""))"
+"0","  }"
+"0","}"
+"2","Warning:"
+"2"," [38;5;232m`aes_string()` was deprecated in ggplot2 3.0.0.
+[36mℹ[38;5;232m Please use tidy evaluation idioms with `aes()`.
+[36mℹ[38;5;232m See also `vignette(""ggplot2-in-packages"")` for more information.
+[90mThis warning is displayed once every 8 hours.[38;5;232m
+[90mCall `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.[38;5;232m[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"
+"1","[38;5;232m`geom_smooth()` using formula = 'y ~ x'[39m
+"

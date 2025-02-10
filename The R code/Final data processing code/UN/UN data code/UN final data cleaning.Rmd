@@ -1,0 +1,636 @@
+---
+title: "WB data cleaning"
+output: html_document
+date: "2024-10-29"
+---
+
+```{r setup, include=FALSE}
+# For the future Tie this package is for the detailed cleaning the WB data set for the professor RA work. May the force with you! 
+# Tie - 2024/10/29
+rm(list = ls())
+
+library (lubridate)     #the time series processing package
+library (tsbox)         #Make time series convverstion, aggregation and plotting simple
+library (RColorBrewer)  #color palettes for R graphics
+library(wesanderson)    #Provides color palettes inspired by Wes Anderson films.
+library(writexl)        #Writes data frames to Excel files.
+library(tidyr)          #Tidies messy data   
+library(xts)            #Extensible time series class for R   
+library(dplyr)          #Data manipulation and transformation.
+library(openxlsx)       #Read, write, and edit Excel files.
+
+````
+
+
+```{r}
+
+UN_nominal_GDP <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/Final data processing code/UN/UN perposs data/UN_nominal_GDP.xlsx")
+
+UN_Weal_GDP <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/Final data processing code/UN/UN perposs data/UN_real_GDP.xlsx")
+
+country_code <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/Matlab/Data_processing_code/Data/countries_code_list.xlsx")
+
+population_growth_rate <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/Matlab/Data_processing_code/Data/population_growth_rate.xls")
+
+ISO_list <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/Matlab/Data_processing_code/Data/UN_AE_LDC_HPIC_SIDS_LLDC_OECD_EIU.xlsx")
+```
+
+
+```{r}
+UN_gross_GDP <- UN_nominal_GDP %>%
+  pivot_longer( `1970`: `2022` ,
+                names_to = "Year",
+                values_to = "nominal_GDP")
+
+UN_real_GDP <- UN_Weal_GDP %>%
+  pivot_longer( `1970`: `2022` ,
+                names_to = "Year",
+                values_to = "real_GDP")
+
+```
+
+```{R}
+# Perform the left join while ensuring only relevant columns are included
+UN_raw <- UN_gross_GDP %>%
+  left_join(
+    UN_real_GDP %>% select(Country, Year, real_GDP),  # Select only relevant columns
+    by = c("Country", "Year")                        # Specify the keys for the join
+  )
+
+#remove a col
+UN_raw $IndicatorName <- NULL
+```
+
+```{R}
+
+#transfer the data into the data
+UN_raw$Year <- as.numeric(UN_raw$Year)
+UN_raw$nominal_GDP <- as.numeric(UN_raw$nominal_GDP)
+UN_raw$real_GDP  <- as.numeric(UN_raw$real_GDP)
+
+```
+
+
+```{r}
+
+# Calculate Price Levels (P_t)
+UN_raw <- UN_raw %>%
+  group_by(Country) %>%
+  mutate(Price_Level = nominal_GDP / real_GDP)
+
+
+```
+
+
+```{R}
+# Calculate Inflation Rates (π_t)
+UN_raw<- UN_raw %>%
+  arrange(Country, Year) %>%
+  mutate(Inflation_Rate = ((Price_Level - lag(Price_Level))/ lag(Price_Level))* 100)
+
+# Print the resulting data frame
+print(UN_raw, n = 100)
+
+```
+
+
+```{r}
+#remove the na_col 
+
+UN_raw <- na.omit(UN_raw)
+
+print(UN_raw)
+
+```
+
+```{R}
+#this line of code is for the mac
+write_xlsx(UN_raw, "/Users/tie/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/Final data processing code/UN_raw.xlsx")
+
+
+
+```
+
+```{R}
+ISO_list <- ISO_list %>% rename(Country = country)
+
+```
+
+```{r}
+
+ISO_list <- ISO_list %>% rename(Country = country)
+
+UN_data_with_iso <- UN_raw %>%
+  left_join(ISO_list %>% select(Country, ISO_code), by = "Country")
+
+print(UN_data_with_iso)
+```
+
+
+```{r}
+UN_data_with_iso  <-UN_data_with_iso  %>%
+  mutate(
+    ISO_code = case_when(
+      Country == "Afghanistan, Islamic Rep. of" ~ "AFG",
+      Country == "Andorra, Principality of" ~ "AND",
+      Country == "Bahrain, Kingdom of" ~ "BHR",
+      Country == "Belarus, Rep. of" ~ "BLR",
+      Country == "Central African Rep." ~ "CAF",
+      Country == "China, P.R.: Hong Kong" ~ "HKG",
+      Country == "China, P.R.: Macao" ~ "MAC",
+      Country == "China, P.R.: Mainland" ~ "CHN",
+      Country == "Comoros, Union of the" ~ "COM",
+      Country == "Congo, Dem. Rep. of the" ~ "COD",
+      Country == "Congo, Rep. of" ~ "COG",
+      Country == "Croatia, Rep. of" ~ "HRV",
+      Country == "Czech Rep." ~ "CZE",
+      Country == "Dominican Rep." ~ "DOM",
+      Country == "Egypt, Arab Rep. of" ~ "EGY",
+      Country == "Equatorial Guinea, Rep. of" ~ "GNQ",
+      Country == "Eritrea, The State of" ~ "ERI",
+      Country == "Estonia, Rep. of" ~ "EST",
+      Country == "Eswatini, Kingdom of" ~ "SWZ",
+      Country == "Ethiopia, The Federal Dem. Rep. of" ~ "ETH",
+      Country == "Euro Area" ~ "EA",
+      Country == "Gambia, The" ~ "GMB",
+      Country == "Iran, Islamic Rep. of" ~ "IRN",
+      Country == "Kazakhstan, Rep. of" ~ "KAZ",
+      Country == "Korea, Rep. of" ~ "KOR",
+      Country == "Kosovo, Rep. of" ~ "XKX",
+      Country == "Kyrgyz Rep." ~ "KGZ",
+      Country == "Lao People's Dem. Rep." ~ "LAO",
+      Country == "Lesotho, Kingdom of" ~ "LSO",
+      Country == "Madagascar, Rep. of" ~ "MDG",
+      Country == "Marshall Islands, Rep. of the" ~ "MHL",
+      Country == "Mauritania, Islamic Rep. of" ~ "MRT",
+      Country == "Micronesia, Federated States of" ~ "FSM",
+      Country == "Moldova, Rep. of" ~ "MDA",
+      Country == "Mozambique, Rep. of" ~ "MOZ",
+      Country == "Nauru, Rep. of" ~ "NRU",
+      Country == "Netherlands, The" ~ "NLD",
+      Country == "North Macedonia, Republic of" ~ "MKD",
+      Country == "Palau, Rep. of" ~ "PLW",
+      Country == "Poland, Rep. of" ~ "POL",
+      Country == "San Marino, Rep. of" ~ "SMR",
+      Country == "Serbia, Rep. of" ~ "SRB",
+      Country == "Slovak Rep." ~ "SVK",
+      Country == "Slovenia, Rep. of" ~ "SVN",
+      Country == "South Sudan, Rep. of" ~ "SSD",
+      Country == "Syrian Arab Rep." ~ "SYR",
+      Country == "São Tomé and Príncipe, Dem. Rep. of" ~ "STP",
+      Country == "Tajikistan, Rep. of" ~ "TJK",
+      Country == "Tanzania, United Rep. of" ~ "TZA",
+      Country == "Timor-Leste, Dem. Rep. of" ~ "TLS",
+      Country == "Türkiye, Rep of" ~ "TUR",
+      Country == "Vietnam" ~ "VNM",
+      Country == "Yemen, Rep. of" ~ "YEM",
+      TRUE ~ ISO_code  # 如果不在列表中，保留原值
+    )
+  )
+
+UN_data_with_iso  <- UN_data_with_iso  %>% left_join(ISO_list %>% select(ISO_code, UN), by = 'ISO_code')
+
+UN_data_with_iso  <- UN_data_with_iso  %>%
+  mutate(
+    UN = ifelse(Country == "South Sudan, Rep. of", 1, UN),
+    UN = ifelse(Country == "Curaçao", 0, UN),
+    UN = ifelse(Country == "Czechoslovakia (Former)", 0, UN),
+    UN = ifelse(Country == "Ethiopia (Former)", 0, UN),
+    UN = ifelse(Country == "Former Netherlands Antilles", 0, UN),
+    UN = ifelse(Country == "Sint Maarten (Dutch part)", 0, UN),
+    UN = ifelse(Country == "Sudan (Former)", 0, UN),
+    UN = ifelse(Country == "USSR (Former)", 0, UN),
+    UN = ifelse(Country == "Yemen Arab Republic (Former)", 0, UN),
+    UN = ifelse(Country == "Yemen Democratic (Former)", 1, UN),
+    UN = ifelse(Country == "Yugoslavia (Former)", 1, UN)
+  )
+
+
+```
+
+```{R}
+
+UN_data_with_iso  <- UN_data_with_iso  %>%
+  mutate(
+    UN = ifelse(Country == "South Sudan, Rep. of", 1, UN),
+    UN = ifelse(Country == "Curaçao", 0, UN),
+    UN = ifelse(Country == "Czechoslovakia (Former)", 0, UN),
+    UN = ifelse(Country == "Ethiopia (Former)", 0, UN),
+    UN = ifelse(Country == "Former Netherlands Antilles", 0, UN),
+    UN = ifelse(Country == "Sint Maarten (Dutch part)", 0, UN),
+    UN = ifelse(Country == "Sudan (Former)", 0, UN),
+    UN = ifelse(Country == "USSR (Former)", 0, UN),
+    UN = ifelse(Country == "Yemen Arab Republic (Former)", 0, UN),
+    UN = ifelse(Country == "Yemen Democratic (Former)", 1, UN),
+    UN = ifelse(Country == "Yugoslavia (Former)", 1, UN)
+  )
+
+#remove the non un countries
+
+N_data_with_UN <- UN_data_with_iso %>% filter(is.na(ISO_code))
+print(unique(N_data_with_UN$Country))
+
+# Add South Sudan's ISO code (assuming `ISO_code` column is for alpha-3 codes)
+UN_data_with_iso <- UN_data_with_iso %>%
+    mutate(ISO_code = if_else(Country == "South Sudan", "SSD", ISO_code))
+
+UN_data_with_iso <- UN_data_with_iso %>%
+  filter(!is.na(ISO_code) & !is.na(UN))
+
+
+UN_data_with_iso <- UN_data_with_iso %>%
+    filter(UN == 1)
+
+```
+
+```{R}
+#WB_data_raw <- WB_data
+#UN_data_raw <- UN_data
+#IFS_dat_raw <- IFS_data_with_iso 
+#OECD_data_raw <- OECD_data
+
+
+```
+
+```{R}
+#the name list for the WB data set 
+#name_set <- names(wb_data_raw)
+
+#the following are the code used in the matlab.
+#'year', 'Country_Name', 'Real_GDP_2015_USD', 'Nominal_GDP_USD', 'Inflation_Rate_USD'
+
+#new name = old name
+#rename the UN data set
+UN_data_raw <- UN_data_with_iso %>%
+  rename(year = Year,
+         Country_Name = Country,
+         Real_GDP_2015_USD = real_GDP,
+         Nominal_GDP_USD = nominal_GDP,
+         Inflation_Rate_USD = Inflation_Rate)
+
+#rename the IFS data set
+#IFS_dat_raw <- IFS_dat_raw %>%
+ # rename(year = Year, Country_Name = Country,
+         #Real_GDP_2015_USD = real_GDP, Nominal_GDP_USD =gross_GDP,
+        # Inflation_Rate_USD = Inflation_Rate)
+
+country_code_raw <- country_code
+
+#rename the Countries code
+country_code_raw <- country_code %>%
+  rename(Country_Name = Country.Name,
+         ISO_code = `ISO code`)
+  
+
+```
+
+```{R}
+#processing the population growth rate
+
+#rename the populaton growth rate 
+population_growth_rate_raw <- population_growth_rate
+
+population_growth_rate_half_cook <- population_growth_rate_raw %>%
+    pivot_longer(cols = matches("^\\d{4}$"),  # 选择所有年份列（四位数字）
+                 names_to = "year", 
+                 values_to = "value") %>%
+    mutate(year = as.numeric(year)) %>%       # 将年份转换为数值格式
+    mutate(value = na_if(as.character(value), "")) %>%  # 先将 value 转为字符，再将空字符串替换为 NA
+    mutate(value = as.numeric(value))         # 将 value 列转换为数值格式
+
+#rename the growth data
+population_growth_rate <- population_growth_rate_half_cook %>% 
+  rename(Country_Name = `Country Name`,
+         ISO_code = `Country Code`,
+         Population_growth_rate = value)
+
+```
+
+```{r}
+# Define the function
+reorder_columns <- function(df) {
+  # Specify the desired order for the key columns
+  key_columns <- c("Country_Name", "year", "ISO_code")
+  
+  # Get the remaining columns that are not in the specified order
+  remaining_columns <- setdiff(names(df), key_columns)
+  
+  # Reorder the dataframe by placing key columns first, then the remaining columns
+  df <- df[, c(key_columns, remaining_columns)]
+  
+  return(df)
+}
+
+```
+
+```{R}
+
+####################WB_data#######
+# Merge World Bank data
+WB_data_raw <- WB_data_raw %>%
+  left_join(country_code_raw, by = "Country_Name")
+
+WB_data_p <- WB_data_raw %>%
+  left_join(population_growth_rate %>% 
+              select(ISO_code, year, Population_growth_rate), 
+            by = c("ISO_code", "year"))
+
+WB_data_pr <- reorder_columns(WB_data_p)
+###################################
+
+
+####################UN_data#######
+# combine the UN data
+# Merge UN data set
+
+UN_data_raw <-  UN_data_raw %>%
+  mutate(year = as.numeric(year))
+
+UN_data_raw <- UN_data_raw %>%
+  left_join(country_code_raw, by = "Country_Name")
+
+UN_data_p <- UN_data_raw %>%
+  left_join(population_growth_rate %>% 
+              select(ISO_code, year, Population_growth_rate), 
+            by = c("ISO_code", "year"))
+
+UN_data.pr <- reorder_columns(UN_data_p)
+
+head(UN_data.pr)
+
+#check the data 
+print(unique(UN_data.pr$ISO_code))
+print(unique(UN_data.pr$UN))
+unique(is.na(UN_data.pr$Population_growth_rate))
+
+
+
+###################################
+
+
+####################IFS_data#######
+# Merge IFS data set
+IFS_date_raw <- IFS_dat_raw %>%
+  left_join(country_code_raw, by = "Country_Name")
+
+IFS_date_raw <- IFS_date_raw %>%
+  select(-UN, -ISO_code.y) %>%  # Remove UN and ISO_code.y
+  rename(ISO_code = ISO_code.x)  # Rename ISO_code.x to ISO_code
+
+IFS_date_p <- IFS_date_raw %>%
+  left_join(population_growth_rate %>% 
+              select(ISO_code, year, Population_growth_rate), 
+            by = c("ISO_code", "year"))
+
+IFS_date_p <- IFS_date_p %>% 
+  left_join(population_growth_rate %>% 
+              select(Country_Name, year, Population_growth_rate), 
+            by = c("Country_Name", "year"))
+
+ IFS_date_p <- IFS_date_p%>%
+  mutate(Population_growth_rate = coalesce(Population_growth_rate.x, Population_growth_rate.y)) %>%
+  select(-Population_growth_rate.x, -Population_growth_rate.y)  # 删除原列（可选）
+
+
+
+IFS_date.pr <- reorder_columns(IFS_date_p)
+
+any(is.na(IFS_date.pr$Population_growth_rate))
+
+######
+
+countries_with_na_population <-  IFS_date_pr%>%
+  filter(is.na(Population_growth_rate)) %>%  # 筛选 Population_growth_rate 列为 NA 的行
+  select(Country_Name) %>%  # 仅保留 Country 列
+  distinct()  # 去重，确保每个国家只显示一次
+
+print(countries_with_na_population)
+ IFS_date_pr = reorder_columns(IFS_date_p)
+
+ ###################################
+ 
+ IFS_date_fuck <- IFS_date.pr %>%  filter(is.na(Population_growth_rate)) %>%  # 筛选 Population_growth_rate 列为 NA 的行
+  select(Country_Name) %>%  # 仅保留 Country 列
+  distinct()  # 去重，确保每个国家只显示一次
+
+ 
+ 
+ 
+print(unique(population_growth_rate$Country_Name))
+
+print(IFS_date.pr)
+###################################
+
+
+IFS_date.pr <- IFS_date.pr %<% mutate(filtered_data, by  Country_Name ISO_code,  )
+
+
+library(dplyr)
+
+# Merge the data on Country_Name and ISO_code
+IFS_date_pr <- IFS_date_pr %>%
+  left_join(filtered_data, by = c("Country_Name", "year")) %>%
+  mutate(
+    Population_growth_rate = coalesce(Population_growth_rate.x, Population_growth_rate.y)
+  ) %>%
+  select(-Population_growth_rate.x, -Population_growth_rate.y)  # Remove extra columns
+
+
+IFS_date_pr 
+
+
+
+
+# Merge OECD data set
+#OECD_data_raw <- OECD_data_raw %>%left_join(country_code_raw, by = "Country_Name")
+
+print(IFS_date.pr$Population_growth_rate)
+
+
+
+```
+
+
+```{R}
+#print the OECD list
+OECD_list <- unique(OECD_data_raw$Country_Name)
+
+#The left join with the countries name
+OECD_list.df <- data.frame(OECD_list)
+
+#rename the colname to the ISO code
+colnames(OECD_list.df)[1] <- "ISO_code"
+
+#now, its time to merge the name, here i will put the code together with WB data set
+
+OECD_list.c <- OECD_list.df %>%
+  left_join(WB_data_pr %>% 
+              select(ISO_code, Country_Name), 
+            by = "ISO_code")
+
+#remove the constant 
+unique_OECD_list <- OECD_list.c %>% distinct()
+
+
+#change the name of hte OECE data base
+OECD_data_ISO <- OECD_data_raw %>% rename(ISO_code = Country_Name)
+
+#now put the OECD countries name back to its data base 
+OECD_full <- OECD_data_ISO %>%
+  left_join(unique_OECD_list %>% 
+              select(ISO_code, Country_Name),
+            by = "ISO_copede")
+
+OECD_almost_down <- reorder_columns(OECD_full)
+
+
+#put the population data with OECD data together
+OECD_data.p <- OECD_almost_down %>%
+  left_join(population_growth_rate %>% 
+              select(ISO_code, year, Population_growth_rate), 
+            by = c("ISO_code", "year"))
+
+#reorder the line
+OECD_data.pr <- reorder_columns(OECD_data.p)
+
+```
+
+
+```{R }
+#check the reuslt hope I am not fucked up
+
+IFS_date.pr
+UN_data.pr
+WB_data_pr
+OECD_data.pr
+
+IFS_date_mean <- (IFS_date.pr$Nominal_GDP_USD, na.rm = T)
+UN_data_mean <- mean(UN_data.pr$Nominal_GDP_USD, na.rm = T)
+WB_data_mean <- mean(WB_data_pr$Nominal_GDP_USD, na.rm = T)
+OECD_data_mean <- mean(OECD_data.pr$Nominal_GDP_USD,na.rm = T)
+
+print(IFS_date_mean)
+print(UN_data_mean)
+print(WB_data_mean)
+print(OECD_data_mean)
+
+```
+
+
+```{R}
+
+# Save IFS_date.pr to an Excel file
+write.xlsx(IFS_date.pr, "IFS_date_pr.xlsx", overwrite = TRUE)
+
+# Save UN_data.pr to an Excel file
+write.xlsx(UN_data.pr, "UN_data_pr.xlsx", overwrite = TRUE)
+
+WB_data_pr_un <- left_join(ISO_list %>% select(ISO_code, UN), by = 'ISO_code')
+
+
+# Save WB_data_pr to an Excel file
+write.xlsx(WB_data_pr, "WB_data_pr.xlsx", overwrite = TRUE)
+
+# Save OECD_data.pr to an Excel file
+write.xlsx(OECD_data.pr, "OECD_data_pr.xlsx", overwrite = TRUE)
+
+write.xlsx
+
+```
+
+```{r}
+# Define the list
+new_entries <- list(
+  "Afghanistan, Islamic Rep. of" = "AFG",
+  "Andorra, Principality of" = "AND",
+  "Bahrain, Kingdom of" = "BHR",
+  "Belarus, Rep. of" = "BLR",
+  "Central African Rep." = "CAF",
+  "China, P.R.: Hong Kong" = "HKG",
+  "China, P.R.: Macao" = "MAC",
+  "China, P.R.: Mainland" = "CHN",
+  "Comoros, Union of the" = "COM",
+  "Congo, Dem. Rep. of the" = "COD",
+  "Congo, Rep. of" = "COG",
+  "Croatia, Rep. of" = "HRV",
+  "Czech Rep." = "CZE",
+  "Dominican Rep." = "DOM",
+  "Egypt, Arab Rep. of" = "EGY",
+  "Equatorial Guinea, Rep. of" = "GNQ",
+  "Eritrea, The State of" = "ERI",
+  "Estonia, Rep. of" = "EST",
+  "Eswatini, Kingdom of" = "SWZ",
+  "Ethiopia, The Federal Dem. Rep. of" = "ETH",
+  "Euro Area" = "EA",
+  "Gambia, The" = "GMB",
+  "Iran, Islamic Rep. of" = "IRN",
+  "Kazakhstan, Rep. of" = "KAZ",
+  "Korea, Rep. of" = "KOR",
+  "Kosovo, Rep. of" = "XKX",
+  "Kyrgyz Rep." = "KGZ",
+  "Lao People's Dem. Rep." = "LAO",
+  "Lesotho, Kingdom of" = "LSO",
+  "Madagascar, Rep. of" = "MDG",
+  "Marshall Islands, Rep. of the" = "MHL",
+  "Mauritania, Islamic Rep. of" = "MRT",
+  "Micronesia, Federated States of" = "FSM",
+  "Moldova, Rep. of" = "MDA",
+  "Mozambique, Rep. of" = "MOZ",
+  "Nauru, Rep. of" = "NRU",
+  "Netherlands, The" = "NLD",
+  "North Macedonia, Republic of" = "MKD",
+  "Palau, Rep. of" = "PLW",
+  "Poland, Rep. of" = "POL",
+  "San Marino, Rep. of" = "SMR",
+  "Serbia, Rep. of" = "SRB",
+  "Slovak Rep." = "SVK",
+  "Slovenia, Rep. of" = "SVN",
+  "South Sudan, Rep. of" = "SSD",
+  "Syrian Arab Rep." = "SYR",
+  "São Tomé and Príncipe, Dem. Rep. of" = "STP",
+  "Tajikistan, Rep. of" = "TJK",
+  "Tanzania, United Rep. of" = "TZA",
+  "Timor-Leste, Dem. Rep. of" = "TLS",
+  "Türkiye, Rep of" = "TUR",
+  "Vietnam" = "VNM",
+  "Yemen, Rep. of" = "YEM"
+)
+
+# Convert list to a data frame
+new_entries_df <- data.frame(
+  country = names(new_entries),
+  ISO_code = unlist(new_entries),
+  stringsAsFactors = FALSE # To keep text columns as character and not factors
+)
+
+# Output the data frame
+print(new_entries_df)
+
+
+```
+
+
+```{R}
+
+ISO_list <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/Matlab/Data_processing_code/Data/UN_AE_LDC_HPIC_SIDS_LLDC_OECD_EIU.xlsx")
+
+# 将新条目添加到现有的 ISO_list
+ISO_list <- ISO_list %>% l
+
+new_entries_df
+
+print(ISO_list)
+
+# Save OECD_data.pr to an Excel file
+write.xlsx(ISO_list, "UN_AE_LDC_HPIC_SIDS_LLDC_OECD_EIU.xlsx", overwrite = TRUE)
+
+```
+
+```{r}
+ISOS_list <- merge(ISO_list, new_entries_df, by = c("country", "ISO_code"), all = TRUE)
+write.xlsx(ISOS_list, "UN_AE_LDC_HPIC_SIDS_LLDC_OECD_EIU.xlsx", overwrite = TRUE)
+
+```
+
+
+```ISO_list

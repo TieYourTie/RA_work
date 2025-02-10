@@ -1,0 +1,7 @@
+"0",""
+"0","# Calculate Price Levels (P_t)"
+"0","IFS_raw <- IFS_raw %>%"
+"0","  group_by(Country) %>%"
+"0","  mutate(Price_Level = gross_GDP / real_GDP)"
+"0",""
+"0",""

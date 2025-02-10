@@ -1,0 +1,7 @@
+"0","#import the data"
+"0",""
+"0","IFS_gross_GDP <- read_excel(""~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/Final data processing code/IFS data set/IFS gross GDP.xlsx"")"
+"0",""
+"0",""
+"0","IFS_real_GDP <- read_excel(""~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/Final data processing code/IFS data set/IFS real GDP.xlsx"")"
+"0",""

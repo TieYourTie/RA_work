@@ -1,0 +1,102 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+#the target value x 
+target_x = 1.5
+#assume we only conider the a closed neighbor
+closed_a = 5
+#using x - all the rest of x
+rank_raw <- target_x 
+
+x <-
+
+#rank if from teh smallest to the largested
+rank <- sort(rank_raw)
+
+#pick the smallest a number of x.
+k <- head(rank, closed_a)
+
+#calcuator the average
+k_nearst_neighbor <- mean(abs(k + target_x))
+
+#print the value
+print(k_nearst_neighbor)
+
+
+```
+
+```{r}
+
+library(igraph)
+
+
+edges <- c(
+     "(1.4, 9.9)","(0.1, 0.7)",
+     
+     "(1.4, 9.9)","(1.5, 10)",  # Root 到 Node1 的连接
+  
+     "(0.1, 0.7)","(1.0, 8.3)",
+     
+     "(1.0, 8.3)","(1.0, 9,0)",
+     
+     "(1.5, 10)","(1.3, 9.6)",  # Root 到 Node1 的连接
+     
+     "(1.5, 10)","(1.6, 10.0)",  # Root 到 Node1 的连接
+     
+     "(1.6, 10.0)", "(1.6, 10.1)", # Root 到 Node2 的连接
+
+     "(1.6, 10.0)", "(3.1, 0.7)", # Root 到 Node2 的连接
+     
+  
+     "(3.1, 0.7)", "(2.0, 9.0)",  # Root 到 Node2 的连接
+  
+  "(3.1, 0.7)", "(4.5, -9.8)",  # Root 到 Node2 的连接
+  
+  "(2.0, 9.0)", "(1.9, 9.7)",  # Root 到 Node2 的连接
+  
+  "(1.9, 9.7)", "(1.7, 10)",  # Root 到 Node2 的连接
+  
+  "(1.9, 9.7)", "NA2",  # Root 到 Node2 的连接
+  
+  
+  "(2.0, 9.0)", "(2.2, 8.3)",  # Root 到 Node2 的连接
+  
+  "(2.2, 8.3)", "NA",  # Root 到 Node2 的连接
+  
+  "(2.2, 8.3)", "(2.3, 7.4)",  # Root 到 Node2 的连接
+  
+
+  "(4.5, -9.8)", "(4.4, -9.4)", # Root 到 Node2 的连接
+  
+  "(4.5, -9.8)", "(5.5, -6.8)", # Root 到 Node2 的连接
+  
+  "(5.5, -6.8)", "(5.5, -7.2)"
+)
+
+
+
+
+
+#"b", "Leaf1", # Node1 到 Leaf1 的连接
+#  "b", "Leaf2", # Node1 到 Leaf2 的连接
+
+
+# 创建图
+tree <- graph_from_edgelist(matrix(edges, ncol = 2, byrow = TRUE), directed = TRUE)
+
+# 绘制图
+plot(tree, 
+     vertex.size = 0,                 # 节点大小
+     vertex.label.cex = 0.8,           # 标签文字大小
+     vertex.label.color = "black",     # 标签文字颜色
+     vertex.color = "lightblue",       # 节点颜色
+     edge.arrow.size = 0.5,            # 边箭头大小
+     layout = layout_as_tree(tree, root = 1, flip.y = TRUE))  # 树状图布局
+
+
+
+```

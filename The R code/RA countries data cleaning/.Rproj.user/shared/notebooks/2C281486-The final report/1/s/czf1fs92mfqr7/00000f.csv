@@ -1,0 +1,89 @@
+"0","library (lubridate)     #the time series processing package"
+"2","
+Attaching package: ‘lubridate’
+
+"
+"2","The following objects are masked from ‘package:base’:
+
+    date, intersect, setdiff, union
+
+"
+"0","library (cansim)        #provides easy access to the statistics canada data tale"
+"0","library (WDI)           #Accesses data from the world development indicators"
+"0","library (fredr)         #provide an interface to the federal reserve economic data API"
+"0","library (tsbox)         #Make time series convverstion, aggregation and plotting simple"
+"2","Registered S3 method overwritten by 'data.table':
+  method           from
+  print.data.table     
+"
+"0","library (RColorBrewer)  #color palettes for R graphics"
+"0","library(wesanderson)    #Provides color palettes inspired by Wes Anderson films."
+"0","library(writexl)        #Writes data frames to Excel files."
+"0","library(tidyr)          #Tidies messy data   "
+"0","library(xts)            #Extensible time series class for R   "
+"2","Loading required package: zoo
+"
+"2","
+Attaching package: ‘zoo’
+
+"
+"2","The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+"
+"0","library(dplyr)          #Data manipulation and transformation."
+"2","
+######################### Warning from 'xts' package ##########################
+#                                                                             #
+# The dplyr lag() function breaks how base R's lag() function is supposed to  #
+# work, which breaks lag(my_xts). Calls to lag(my_xts) that you type or       #
+# source() into this session won't work correctly.                            #
+#                                                                             #
+# Use stats::lag() to make sure you're not using dplyr::lag(), or you can add #
+# conflictRules('dplyr', exclude = 'lag') to your .Rprofile to stop           #
+# dplyr from breaking base R's lag() function.                                #
+#                                                                             #
+# Code in packages is not affected. It's protected by R's namespace mechanism #
+# Set `options(xts.warn_dplyr_breaks_lag = FALSE)` to suppress this warning.  #
+#                                                                             #
+###############################################################################
+"
+"2","
+Attaching package: ‘dplyr’
+
+"
+"2","The following objects are masked from ‘package:xts’:
+
+    first, last
+
+"
+"2","The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+"
+"2","The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+"
+"0","library(openxlsx)       #Read, write, and edit Excel files."
+"0","library(ggplot2)"
+"0","library(ggthemes)"
+"0","library(dplyr)"
+"0","library(ggthemes)"
+"0","library(readxl)"
+"0","library(dplyr)"
+"0","library(ggplot2)"
+"0","library(ggthemes)"
+"0","library(gridExtra)"
+"2","
+Attaching package: ‘gridExtra’
+
+"
+"2","The following object is masked from ‘package:dplyr’:
+
+    combine
+
+"

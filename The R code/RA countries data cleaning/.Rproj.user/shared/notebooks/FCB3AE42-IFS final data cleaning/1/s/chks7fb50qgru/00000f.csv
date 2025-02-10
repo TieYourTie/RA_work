@@ -1,0 +1,5 @@
+"0","#remove na col "
+"0","IFS_na_raw<- IFS_na_raw %>% mutate(across(everything(), ~ na_if(., ""..."")))"
+"0",""
+"0","IFS_raw <- na.omit(IFS_na_raw)"
+"0"," "

@@ -1,0 +1,606 @@
+---
+title: "The final report"
+output: pdf_document
+date: "2024-11-14"
+---
+
+```{R include=FALSE}
+#clean the enviroment
+rm(list = ls())
+```
+
+
+```{r include=FALSE}
+library (lubridate)     #the time series processing package
+library (cansim)        #provides easy access to the statistics canada data tale
+library (WDI)           #Accesses data from the world development indicators
+library (fredr)         #provide an interface to the federal reserve economic data API
+library (tsbox)         #Make time series convverstion, aggregation and plotting simple
+library (RColorBrewer)  #color palettes for R graphics
+library(wesanderson)    #Provides color palettes inspired by Wes Anderson films.
+library(writexl)        #Writes data frames to Excel files.
+library(tidyr)          #Tidies messy data   
+library(xts)            #Extensible time series class for R   
+library(dplyr)          #Data manipulation and transformation.
+library(openxlsx)       #Read, write, and edit Excel files.
+library(ggplot2)
+library(ggthemes)
+library(dplyr)
+library(ggthemes)
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+
+```
+
+
+```{r include=FALSE}
+#lode the data 
+
+#Word bank
+WB_stage_one_QD <- read_excel("WB_stage_one_regresison_QD.xlsx")
+WB_stage_one_HP <-read_excel("WB_stage_one_regresison_HP.xlsx")
+
+#UN
+UN_stage_one_QD <- read_excel("UN_stage_one_regresison_QD.xlsx")
+UN_stage_one_HP <-read_excel("UN_stage_one_regresison_HP.xlsx")
+
+#OECD
+OECD_stage_one_QD <- read_excel("OECD_stage_one_regresison_QD.xlsx")
+OECD_stage_one_HP <-read_excel("OECD_stage_one_regresison_HP.xlsx")
+
+#IFS
+IFS_stage_one_QD <- read_excel("IFS_stage_one_regresison_QD.xlsx")
+IFS_stage_one_HP <-read_excel("IFS_stage_one_regresison_HP.xlsx")、
+
+#the countries check list
+countries_check_list <- read_excel("UN_AE_LDC_HPIC_SIDS_LLDC_OECD_EIU.xlsx")
+
+
+#IFS_stage_one_HP <- IFS_stage_one_HP %>%  filter(AverageInflation <= 10)
+
+#IFS_stage_one_QD <- IFS_stage_one_QD %>%  filter(AverageInflation <= 10)
+
+```
+
+
+```{r}
+
+#create a new dataset base on the countries check list
+countries_check_list$ultra_checklist <- ifelse(countries_check_list$LDC == 1 | countries_check_list$HPIC == 1 | countries_check_list$SIDS == 1 | countries_check_list$LLDC == 1, 1, 0)
+
+#create the new dataset 
+countries_cleaning <- countries_check_list[, c("ISO_code", "ultra_checklist")]
+
+#only keep the countries with one 
+filtered_data <-  countries_check_list[ countries_check_list$ultra_checklist == 1, ]
+
+#the countries that is not developed enough
+removed_countries <-  filtered_data [, c("ISO_code", "ultra_checklist")]
+
+
+```
+
+```{r eval=FALSE, include=FALSE}
+
+# 定义数据集、标题和来源
+datasets <- list(WB_stage_one_QD, WB_stage_one_HP, UN_stage_one_QD, UN_stage_one_HP, 
+                 OECD_stage_one_QD, OECD_stage_one_HP, IFS_stage_one_QD, IFS_stage_one_HP)
+titles <- c("WB_Persistence (QD)", "WB_Persistence (HP)", "UN_Persistence(QD)", "UN_Persistence(HP)", 
+            "OECD_Persistence(QD)", "OECD_Persistence(HP)", "IFS_Persistence(QD)", "IFS_Persistence(HP)")
+sources <- c("World Bank", "World Bank", "United Nations", "United Nations", 
+             "OECD", "OECD", "IFS", "IFS")
+
+# 生成单个图表的函数
+generate_plot <- function(data, y_var, base_title, source) {
+  # 计算数据集中国家的数量
+  n <- nrow(data)
+  
+  # 根据变量名动态生成标题
+  title <- gsub("Persistence", ifelse(y_var == "Impact_effect", "Impact", "Persistence"), base_title)
+  
+  ggplot(data, aes_string(x = "AverageInflation", y = y_var)) +
+    geom_point(color = "blue", size = 1.5) +
+    geom_smooth(method = "lm", se = FALSE, color = "red") +
+    labs(
+      title = title,
+      x = "Average Inflation",
+      y = y_var,
+      caption = paste("Data source:", source)
+    ) +
+    # 添加国家数量的注释在左下角，位于数据来源的上方
+    annotate("text", x = Inf, y = Inf, label = paste("Number of countries:", n), 
+             hjust = 1, vjust = 1.5, size = 3, color = "grey40", fontface = "italic") +
+    theme_economist() +
+    theme(
+      plot.title = element_text(hjust = 0.5, size = 10, margin = margin(b = 5)),
+      axis.title.x = element_text(size = 8),
+      axis.title.y = element_text(size = 8),
+      axis.text = element_text(size = 7),
+      plot.caption = element_text(hjust = 0, vjust = 1, face = "italic", size = 6),
+      plot.margin = margin(t = 10, b = 10, l = 10, r = 10)
+    )
+}
+
+# 循环遍历每个数据集、标题和来源以生成图表
+for (i in 1:length(datasets)) {
+  data <- datasets[[i]]      # 当前数据集
+  base_title <- titles[i]     # 对应的基本标题
+  source <- sources[i]        # 对应的来源
+  
+  # 检查数据集中是否包含所需的列
+  if ("Persistence_effect" %in% colnames(data) && "Impact_effect" %in% colnames(data)) {
+    persistence_plot <- generate_plot(data, "Persistence_effect", base_title, source)
+    impact_plot <- generate_plot(data, "Impact_effect", base_title, source)
+    
+    # 将两个图表垂直排列，具有相等的高度
+    combined_plot <- grid.arrange(persistence_plot, impact_plot, ncol = 1, heights = c(1, 1))
+    
+    # 保存组合后的图表，指定尺寸
+    ggsave(filename = paste0("combined_plot_", i, ".png"), plot = combined_plot, width = 8, height = 20)
+  } else {
+    message(paste("跳过数据集", base_title, "因为缺少必要的列。"))
+  }
+}
+
+
+  
+
+```
+
+
+
+```{r echo=FALSE}
+
+# Remove rows from WB_stage_one_QD where ISO_code matches any in removed_countries
+WB_stage_one_QD <- WB_stage_one_QD[!(WB_stage_one_QD$ISO_code %in% removed_countries$ISO_code), ]
+
+WB_stage_one_QD <- WB_stage_one_QD[WB_stage_one_QD$ISO_code != "IRQ", ]
+
+
+# Calculate the number of countries remaining
+n <- nrow(WB_stage_one_QD)
+
+
+# Find the top 3 countries with the highest average inflation
+top_countries <- WB_stage_one_QD %>%
+  arrange(desc(AverageInflation)) %>%
+  head(3) # Adjust the number of countries as desired
+
+
+# Plot with specified adjustments
+ggplot(WB_stage_one_QD, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") + # Linear regression line
+  #geom_text(data = top_countries, aes(label = Country), vjust = -1, color = "darkred") + # Label top countries
+  labs(
+    title = "Persistence Effect vs Average Inflation (QD)",
+    x = "Average Inflation",
+    y = "Persistence Effect",
+    caption = paste("n =", n, "\nData source: Word Bank")
+  ) +
+   ylim(min(WB_stage_one_QD$Persistence_effect) - 0.1, max(WB_stage_one_QD$Persistence_effect) + 0.1) + # Set y-axis limits
+  theme_economist() + # Economist theme
+  theme(
+    plot.title = element_text(hjust = 0.5), # Center title
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic") # Position caption in the bottom-left
+  )
+
+
+
+```
+
+```{r echo=FALSE}
+
+
+####
+# Step 1: Filter rows where UN column equals 1
+WB_HP_filter_data <- WB_stage_one_HP[WB_stage_one_HP$UN == 1, ]
+
+excluded_ISO_codes <- c(
+  "IRQ", "OMN", "SOM", "YEM", "SSD", "COD", "SYR", "AFG", "SDN", "CAF", "TCD", 
+  "HTI", "ETH", "MMR", "MLI", "GIN", "NGA", "ZWE", "LBY", "UKR", "ERI", "BDI", 
+  "BFA", "MOZ", "CMR", "NER", "LBN", "UGA", "COG", "VEN", "LKA", "IRN", "BRN", "KWT" , "PRK", "GNQ" 
+)
+
+
+
+# Step 2: Remove rows with ISO_code matching those in removed_countries$ISO_code
+WB_HP_filter_data <- WB_HP_filter_data[!(WB_HP_filter_data$ISO_code %in% excluded_ISO_codes), ]
+
+
+#create a new dataset base on the countries check list
+WB_HP_filter_data <- WB_HP_filter_data[!(WB_HP_filter_data$LDC == 1 | 
+                                         WB_HP_filter_data$HPIC == 1 | 
+                                         WB_HP_filter_data$SIDS == 1 | 
+                                         WB_HP_filter_data$LLDC == 1), ]
+
+
+
+
+# Calculate the number of countries
+n <- nrow(WB_HP_filter_data)
+
+
+
+# Plot with specified adjustments and added space for the title
+ggplot(WB_HP_filter_data, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") + # Linear regression line
+  labs(
+    title = "Persistence Effect vs Average Inflation (HP)",
+    x = "Average Inflation",
+    y = "Persistence Effect",
+    caption = paste("n =", n, "\nData source: World Bank")
+  ) +
+  ylim(min(WB_stage_one_HP$Persistence_effect) - 0.2, max(WB_stage_one_HP$Persistence_effect) + 0.2) + # Set y-axis limits
+  theme_economist() + # Economist theme
+  theme(
+    plot.title = element_text(hjust = 0.5, margin = margin(b = 10)), # Increase bottom margin of title
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic"), # Position caption in bottom-left
+    plot.margin = margin(t = 20) # Add extra margin above the plot
+
+
+
+  )
+```
+
+```{r UN_QD, echo=FALSE}
+
+# Calculate the number of countries for UN
+n_UN <- nrow(UN_stage_one_QD)
+
+
+# Find the top 3 countries with the highest average inflation in UN data
+top_countries_UN <- UN_stage_one_QD %>%
+  arrange(desc(AverageInflation)) %>%
+  head(3)
+
+# Plot for UN with specified adjustments
+ggplot(UN_stage_one_QD_filtered, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence Effect vs Average Inflation (UN QD)",
+    x = "Average Inflation",
+    y = "Persistence Effect",
+    caption = paste("n =", n_UN, "\nData source: United Nations")
+  ) +
+  ylim(min(UN_stage_one_QD$Persistence_effect) - 0.1, max(UN_stage_one_QD$Persistence_effect) + 0.2) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 1),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+
+UN_stage_one_QD_na <- na.omit(UN_stage_one_QD)
+y <- UN_stage_one_QD_na$Persistence_effect
+x1<- UN_stage_one_QD_na$AverageInflation
+x2 <- UN_stage_one_QD_na$EIU + UN_stage_one_QD_na$AveragePopulationGrowth
+
+un_model_one <- lm(y ~ x1  )
+summary(un_model_one )
+
+
+```
+
+```{r UN_HP, echo=FALSE}
+####
+# Step 1: Filter rows where UN column equals 1
+UN_HP_filter_data <- UN_stage_one_HP[UN_stage_one_HP$UN == 1, ]
+
+# Step 2: Remove rows with ISO_code matching those in removed_countries$ISO_code
+UN_HP_filter_data <- UN_HP_filter_data[!(UN_HP_filter_data$ISO_code %in% removed_countries$ISO_code), ]
+
+# Step 3: Remove rows with ISO_code "IRQ" or "OMN"
+# List of ISO codes to remove
+excluded_ISO_codes <- c(
+  "IRQ", "OMN", "SOM", "YEM", "SSD", "COD", "SYR", "AFG", "SDN", "CAF", "TCD", 
+  "HTI", "ETH", "MMR", "MLI", "GIN", "NGA", "ZWE", "LBY", "UKR", "ERI", "BDI", 
+  "BFA", "MOZ", "CMR", "NER", "LBN", "UGA", "COG", "VEN", "LKA", "IRN", "BRN", "KWT" , "PRK", "GNQ" 
+)
+
+#create a new dataset base on the countries check list
+UN_HP_filter_data <- UN_HP_filter_data[!(UN_HP_filter_data$LDC == 1 | 
+                                         UN_HP_filter_data$HPIC == 1 | 
+                                         UN_HP_filter_data$SIDS == 1 | 
+                                         UN_HP_filter_data$LLDC == 1), ]
+
+
+# Filter out rows with ISO codes in excluded_ISO_codes
+UN_HP_filter_data <- UN_HP_filter_data[!(UN_HP_filter_data$ISO_code %in% excluded_ISO_codes), ]
+
+# UN HP
+n_UN_HP <- nrow(UN_HP_filter_data )
+
+ggplot(UN_HP_filter_data , aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence Effect vs Average Inflation (UN HP)",
+    x = "Average Inflation",
+    y = "Persistence Effect",
+    caption = paste("n =", n_UN_HP, "\nData source: United Nations")
+  ) +
+  ylim(min(UN_HP_filter_data$Persistence_effect) - 0.2, max(UN_HP_filter_data$Persistence_effect) + 0.2) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5, margin = margin(b = 10)),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic"),
+    plot.margin = margin(t = 20)
+  )
+
+
+```
+
+
+```{R}
+########
+
+# Step 1: Filter rows where UN column equals 1
+UN_QD_filter_data <- UN_stage_one_QD[UN_stage_one_QD$UN == 1, ]
+
+# Step 2: Remove rows with ISO_code matching those in removed_countries$ISO_code
+UN_QD_filter_data  <- UN_QD_filter_data [!(UN_QD_filter_data $ISO_code %in% removed_countries$ISO_code), ]
+
+
+#create a new dataset base on the countries check list
+UN_QD_filter_data  <- UN_QD_filter_data [!(UN_QD_filter_data $LDC == 1 | 
+                                         UN_QD_filter_data $HPIC == 1 | 
+                                         UN_QD_filter_data $SIDS == 1 | 
+                                         UN_QD_filter_data $LLDC == 1), ]
+
+
+# Filter out rows with ISO codes in excluded_ISO_codes
+UN_QD_filter_data  <- UN_QD_filter_data [!(UN_QD_filter_data $ISO_code %in% excluded_ISO_codes), ]
+
+# UN HP
+n_UN_QD <- nrow(UN_QD_filter_data  )
+######
+
+
+
+
+# Create the plot
+ggplot(UN_QD_filter_data, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence Effect vs Average Inflation (UN QD)",
+    x = "Average Inflation",
+    y = "Persistence Effect",
+    caption = paste("n =", n_UN_QD, "\nData source: United Nations")
+  ) +
+  ylim(
+    min(UN_QD_filter_data$Persistence_effect, na.rm = TRUE) - 0.1,
+    max(UN_QD_filter_data$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5, margin = margin(b = 10)),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic"),
+    plot.margin = margin(t = 20)
+  )
+    
+```
+
+```{R OECD-qd, echo=FALSE}
+# Calculate the number of countries for OECD
+n_OECD <- nrow(OECD_stage_one_QD)
+
+# Find the top 3 countries with the highest average inflation in OECD data
+top_countries_OECD <- OECD_stage_one_QD %>%
+  arrange(desc(AverageInflation)) %>%
+  head(3)
+
+# Plot for OECD with specified adjustments
+ggplot(OECD_stage_one_QD, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence Effect vs Average Inflation (OECD QD)",
+    x = "Average Inflation",
+    y = "Persistence Effect",
+    caption = paste("n =", n_OECD, "\nData source: OECD")
+  ) +
+  ylim(min(OECD_stage_one_QD$Persistence_effect) - 0.1, max(OECD_stage_one_QD$Persistence_effect) + 0.1) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+  
+```
+
+
+```{r IFS_QD, echo=FALSE}
+
+ IFS_stage_one_QD <- IFS_stage_one_QD %>%
+    mutate(log_average_inflation = log(AverageInflation + 1)) %>%
+    mutate(average_inflation_Standard = (AverageInflation - mean(AverageInflation)) / sd(AverageInflation)) %>%
+    mutate(average_inflation_demean = (AverageInflation - mean(AverageInflation))) %>%
+    mutate(average_inflation_demedian = (AverageInflation - median(AverageInflation))) %>%
+    mutate(average_inflatin_min_max = (AverageInflation - min(AverageInflation))/(max(AverageInflation) - min(AverageInflation)))
+
+IFS_stage_one_QD_filter <- IFS_stage_one_QD %>%
+  filter(AverageInflation >= 3.120 & AverageInflation <= 12.745)
+
+  
+# Calculate the number of countries for IFS
+n_IFS<- nrow(IFS_stage_one_QD)
+
+# calcuate the number of the coutries for IFS_filter
+n_IFS_filter <- nrow(IFS_stage_one_QD_filter)
+
+# Find the top 3 countries with the highest average inflation in IFS data
+#top_countries_IFS <- IFS_stage_one_QD %>% arrange(desc(AverageInflation)) %>%  head(3)
+
+# Plot for IFS with specified adjustments
+# 绘制图表
+ggplot(IFS_stage_one_QD, aes(y = Persistence_effect, x = log_average_inflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence Effect vs log_average_inflation (IFS QD)",
+    x = "Average Inflation (log)",
+    y = "Persistence Effect",
+    caption = paste("n =", n_IFS, "\nData source: IFS")
+  ) +
+  ylim(
+    min(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) - 0.1,
+    max(IFS_stage_one_QD$Persistence_effect, na.rm = TRUE) + 0.1
+  ) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic")
+  )
+  
+```
+
+```{r IFS_HP, echo=FALSE}
+# IFS HP
+n_IFS_HP <- nrow(IFS_stage_one_HP)
+
+top_countries_IFS_HP <- IFS_stage_one_HP %>%
+  arrange(desc(AverageInflation)) %>%
+  head(3)
+
+ggplot(IFS_stage_one_HP, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence Effect vs Average Inflation (IFS HP)",
+    x = "Average Inflation",
+    y = "Persistence Effect",
+    caption = paste("n =", n_IFS_HP, "\nData source: IFS")
+  ) +
+  ylim(min(IFS_stage_one_HP$Persistence_effect) - 0.2, max(IFS_stage_one_HP$Persistence_effect) + 0.2) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5, margin = margin(b = 10)),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic"),
+    plot.margin = margin(t = 20)
+  )
+
+```
+
+
+
+```{r UN_HP, echo=FALSE}
+
+# Repeat for HP datasets
+
+# UN HP
+n_UN_HP <- nrow(UN_stage_one_HP)
+
+top_countries_UN_HP <- UN_stage_one_HP %>%
+  arrange(desc(AverageInflation)) %>%
+  head(3)
+
+ggplot(UN_stage_one_HP, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence Effect vs Average Inflation (UN HP)",
+    x = "Average Inflation",
+    y = "Persistence Effect",
+    caption = paste("n =", n_UN_HP, "\nData source: United Nations")
+  ) +
+  ylim(min(UN_stage_one_HP$Persistence_effect) - 0.2, max(UN_stage_one_HP$Persistence_effect) + 0.2) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5, margin = margin(b = 10)),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic"),
+    plot.margin = margin(t = 20)
+  )
+```
+
+```{r OECD_HP, echo=FALSE}
+# OECD HP
+n_OECD_HP <- nrow(OECD_stage_one_HP)
+
+top_countries_OECD_HP <- OECD_stage_one_HP %>%
+  arrange(desc(AverageInflation)) %>%
+  head(3)
+
+ggplot(OECD_stage_one_HP, aes(y = Persistence_effect, x = AverageInflation)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(
+    title = "Persistence Effect vs Average Inflation (OECD HP)",
+    x = "Average Inflation",
+    y = "Persistence Effect",
+    caption = paste("n =", n_OECD_HP, "\nData source: OECD")
+  ) +
+  ylim(min(OECD_stage_one_HP$Persistence_effect) - 0.2, max(OECD_stage_one_HP$Persistence_effect) + 0.2) +
+  theme_economist() +
+  theme(
+    plot.title = element_text(hjust = 0.5, margin = margin(b = 10)),
+    plot.caption = element_text(hjust = 0, vjust = 1, face = "italic"),
+    plot.margin = margin(t = 20)
+  )
+
+
+```
+
+
+```
+
+
+```{r echo=FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+
+# List of datasets, titles, and sources
+datasets <- list(WB_stage_one_QD, WB_stage_one_HP, UN_stage_one_QD, UN_stage_one_HP, OECD_stage_one_QD, OECD_stage_one_HP, IFS_stage_one_QD, IFS_stage_one_HP)
+titles <- c("Persistence Effect vs Average Inflation (QD)", 
+            "Persistence Effect vs Average Inflation (HP)", 
+            "Persistence Effect vs Average Inflation (UN QD)", 
+            "Persistence Effect vs Average Inflation (UN HP)", 
+            "Persistence Effect vs Average Inflation (OECD QD)", 
+            "Persistence Effect vs Average Inflation (OECD HP)", 
+            "Persistence Effect vs Average Inflation (IFS QD)", 
+            "Persistence Effect vs Average Inflation (IFS HP)")
+sources <- c("World Bank", "World Bank", "United Nations", "United Nations", "OECD", "OECD", "IFS", "IFS")
+
+# Function to generate the plots
+generate_plot <- function(data, title, source) {
+  # Calculate the number of countries
+  n <- nrow(data)
+  
+  # Find the top 3 countries by Average Inflation
+  top_countries <- data %>%
+    arrange(desc(AverageInflation)) %>%
+    head(3)
+  
+  # Plot with specified adjustments
+  ggplot(data, aes(y = Persistence_effect, x = AverageInflation)) +
+    geom_point(color = "blue") +
+    geom_smooth(method = "lm", se = FALSE, color = "red") + # Linear regression line
+    labs(
+      title = title,
+      x = "Average Inflation",
+      y = "Persistence Effect",
+      caption = paste("n =", n, "\nData source:", source)
+    ) +
+    ylim(min(data$Persistence_effect) - 0.2, max(data$Persistence_effect) + 0.2) + # Adjust y-axis limits as needed
+    theme_economist() +
+    theme(
+      plot.title = element_text(hjust = 0.5, margin = margin(b = 10)),
+      plot.caption = element_text(hjust = 0, vjust = 1, face = "italic"),
+      plot.margin = margin(t = 20)
+    )
+}
+
+# Loop through datasets, titles, and sources
+for (i in 1:length(datasets)) {
+  print(generate_plot(datasets[[i]], titles[i], sources[i]))
+}
+
+
+```

@@ -1,0 +1,6 @@
+"0",""
+"0","#transfer the data into the data"
+"0","UN_raw$Year <- as.numeric(UN_raw$Year)"
+"0","UN_raw$nominal_GDP <- as.numeric(UN_raw$nominal_GDP)"
+"0","UN_raw$real_GDP  <- as.numeric(UN_raw$real_GDP)"
+"0",""

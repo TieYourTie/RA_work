@@ -1,0 +1,9 @@
+"0",""
+"0","#transfer the data into the data"
+"0","IFS_raw$Year <- as.numeric(IFS_raw$Year)"
+"0","IFS_raw$gross_GDP <- as.numeric(IFS_raw$gross_GDP)"
+"2","Warning:"
+"2"," NAs introduced by coercion
+"
+"0","IFS_raw$real_GDP <- as.numeric(IFS_raw$real_GDP)"
+"0",""

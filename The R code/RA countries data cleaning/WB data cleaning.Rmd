@@ -1,0 +1,609 @@
+---
+title: "WB data cleaning"
+output: html_document
+date: "2024-10-29"
+---
+
+```{r setup, include=FALSE}
+# For the future Tie this package is for the detailed cleaning the WB data set for the professor RA work. May the force with you! 
+# Tie - 2024/10/29
+
+library (lubridate)     #the time series processing package
+library (cansim)        #provides easy access to the statistics canada data tale
+library (WDI)           #Accesses data from the world development indicators
+library (fredr)         #provide an interface to the federal reserve economic data API
+library (tsbox)         #Make time series convverstion, aggregation and plotting simple
+library (RColorBrewer)  #color palettes for R graphics
+library(wesanderson)    #Provides color palettes inspired by Wes Anderson films.
+library(writexl)        #Writes data frames to Excel files.
+library(tidyr)          #Tidies messy data   
+library(xts)            #Extensible time series class for R   
+library(dplyr)          #Data manipulation and transformation.
+library(openxlsx)       #Read, write, and edit Excel files.
+
+````
+
+
+```{r}
+
+#lode the world bank cleaned data
+ world_bank_data_cleaned_data <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/Matlab/Data_processing_code/Data/world bank data cleaned data.xlsx")
+
+#lode the OECD data
+OECD_data_yearly_GDP_data <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/Matlab/Data_processing_code/Data/OECD_data_yearly_GDP_data.xlsx")
+
+#lode the UN data
+ UN_GDP_USD <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/Matlab/Data_processing_code/Data/UN_GDP_USD.xlsx")
+
+ #IFM data
+ IFS_cleaned_data <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/Matlab/Data_processing_code/Data/IFS_cleaned_data.xlsx")
+
+
+```
+
+```{R}
+#1.get the country list from the each data base
+
+#1.1 the World Bank
+WB_countries_list <- unique(world_bank_data_cleaned_data$Country.Name)
+
+#1.2 The OECD data
+OECD_countries_list <- unique(OECD_data_yearly_GDP_data$REF_AREA)
+
+#1.3 The UN data
+UN_countries_list <- unique(UN_GDP_USD$Country)
+
+#1.4 The IFS
+IFS_countries_list <- unique(IFS_cleaned_data$REF_AREA)
+
+```
+
+
+```{R}
+#2. remove the region from the dataset (the first step of cleaning)
+
+#2.1 the World bank data set
+
+# Convert the character vector to a data frame
+WB_countries_list <- data.frame(region = WB_countries_list, stringsAsFactors = FALSE)
+
+filtered_WB_countries_list <- WB_countries_list %>%
+  filter(!region %in% c(
+    "Africa Eastern and Southern", "Africa Western and Central", 
+    "Arab World", "Caribbean small states", 
+    "Central Europe and the Baltics", "East Asia & Pacific",
+    "Europe & Central Asia", "European Union", "Euro area", 
+    "High income", "Middle East & North Africa", 
+    "North America", "OECD members", "World", "Sub-Saharan Africa",
+    "South Asia (IDA & IBRD)", 
+    "East Asia & Pacific (IDA & IBRD countries)", "East Asia & Pacific (excluding high income)",
+    "Europe & Central Asia (IDA & IBRD countries)", "Europe & Central Asia (excluding high income)",
+    "Fragile and conflict affected situations", "Heavily indebted poor countries (HIPC)", 
+    "Late-demographic dividend", "Latin America & Caribbean",  
+    "Latin America & Caribbean (excluding high income)", 
+    "Latin America & the Caribbean (IDA & IBRD countries)", 
+    "Least developed countries: UN classification", "Low & middle income",
+    "Low income", "Lower middle income", 
+    "Middle East & North Africa (IDA & IBRD countries)", 
+    "Middle East & North Africa (excluding high income)", 
+    "Middle income", "Post-demographic dividend", 
+    "Pre-demographic dividend", "Sub-Saharan Africa (IDA & IBRD countries)",
+    "Sub-Saharan Africa (excluding high income)", "Upper middle income",
+    "Macao SAR, China", "Early-demographic dividend"
+  ))
+
+#2.2 the OECD data
+OECD_countries_list<- data.frame(region = OECD_countries_list , stringsAsFactors = FALSE)
+filtered_WB_countries_list <- WB_countries_list %>% filter(!region %in% c(
+  "EA20", "EA20", "OECD", "OECDE", "OECD26")
+
+#2.3 the un data
+print(UN_countries_list) #seem its all the countries. 
+
+#2.4 The IFS data
+print(IFS_countries_list) #seem its all the countries.
+
+```
+
+```{r}
+
+All_countries_list <- cbind(filtered_WB_countries_list$region, OECD_countries_list$region, UN_countries_list, IFS_countries_list)
+
+
+# Create a data frame from the list
+
+# The WB data
+output_file_path <- "filtered_WB_countries_list.xlsx"
+write.xlsx(filtered_WB_countries_list, file = output_file_path)
+
+print(paste("Excel file saved as:", output_file_path))
+
+
+# The OECD data
+output_file_path <- "OECD_countries_list.xlsx"
+write.xlsx(OECD_countries_list, file = output_file_path)
+
+print(paste("Excel file saved as:", output_file_path))
+
+####
+UN_countries_list <- c(
+  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Anguilla", "Antigua and Barbuda", 
+  "Argentina", "Armenia", "Aruba", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", 
+  "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bermuda", "Bhutan", 
+  "Bolivia (Plurinational State of)", "Bosnia and Herzegovina", "Botswana", "Brazil", 
+  "British Virgin Islands", "Brunei Darussalam", "Bulgaria", "Burkina Faso", "Burundi", 
+  "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Cayman Islands", "Central African Republic", 
+  "Chad", "Chile", "China", "China, Hong Kong SAR", "China, Macao SAR", "Colombia", "Comoros", 
+  "Congo", "Cook Islands", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czechia", 
+  "Côte d'Ivoire", "D.P.R. of Korea", "D.R. of the Congo", "Denmark", "Djibouti", "Dominica", 
+  "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", 
+  "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "Former Netherlands Antilles", "France", 
+  "French Polynesia", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Greenland", 
+  "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", 
+  "Iceland", "India", "Indonesia", "Iran (Islamic Republic of)", "Iraq", "Ireland", "Israel", 
+  "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo", "Kuwait", 
+  "Kyrgyzstan", "Lao People's DR", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", 
+  "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", 
+  "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia (FS of)", 
+  "Monaco", "Mongolia", "Montenegro", "Montserrat", "Morocco", "Mozambique", "Myanmar", 
+  "Namibia", "Nauru", "Nepal", "Netherlands", "New Caledonia", "New Zealand", "Nicaragua", 
+  "Niger", "Nigeria", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Panama", 
+  "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Puerto Rico", 
+  "Qatar", "Republic of Korea", "Republic of Moldova", "Romania", "Russian Federation", 
+  "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Samoa", "San Marino", "Sao Tome and Principe", 
+  "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", 
+  "Slovenia", "Solomon Islands", "Somalia", "South Africa", "Spain", "Sri Lanka", 
+  "St. Vincent and the Grenadines", "State of Palestine", "Sudan (Former)", "Suriname", 
+  "Sweden", "Switzerland", "Syrian Arab Republic", "Tajikistan", "Thailand", "Timor-Leste", 
+  "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkmenistan", "Turks and Caicos Islands", 
+  "Tuvalu", "Türkiye", "U.R. of Tanzania: Mainland", "Uganda", "Ukraine", "United Arab Emirates", 
+  "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", 
+  "Venezuela (Bolivarian Republic of)", "Viet Nam", "Yemen", "Zambia", "Zanzibar", "Zimbabwe"
+)
+
+
+
+###
+
+# The UN data
+output_file_path <- "UN_countries_list.xlsx"
+write.xlsx(UN_countries_list, file = output_file_path)
+print(UN_countries_list)
+
+
+print(paste("Excel file saved as:", output_file_path))
+
+
+IFS_countries_list.df <- data.frame(region = IFS_countries_list)
+
+# Save the data frame to an Excel file
+write.xlsx(IFS_countries_list.df, file = output_file_path)
+
+# Print confirmation
+cat("Excel file saved as:", output_file_path, "\n")
+
+
+
+UN_countries_list.df <- data.frame(region = UN_countries_list)
+print(UN_countries_list.df)
+
+
+# 将两个数据框（假设包含“国家”或“区域”列）按公共列进行合并
+result_df <- merge(filtered_WB_countries_list, OECD_countries_list, by = "region", all = TRUE)
+result_df <- merge(result_df, IFS_countries_list.df, by = "region", all = TRUE)
+result_df <- merge(result_df, UN_countries_list.df, by = "region", all = TRUE)
+
+print(result_df)
+
+countries_names_list <- result_df
+
+#output the result 
+write.xlsx(countries_names_list, file = output_file_path)
+
+```
+
+```{R}
+
+All_countries_list <- read_excel("All_countries_list.xlsx")
+All_countries_cleaned_list <- unique(All_countries_list)
+
+#output the list 
+
+output_file_path <- "All_countries_cleaned_list.xlsx"
+write.xlsx(All_countries_cleaned_list, file = output_file_path)
+
+print(paste("Excel file saved as:", output_file_path))
+
+
+
+```
+
+
+```{r}
+
+# Read in the datasets
+corrected_un_countries <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/Matlab/The countries and democratic list check list/Corrected_UN_countries_list_with_ISO_codes.xlsx")
+
+updated_merged_wb_un_data_with_na <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/Matlab/The countries and democratic list check list/Updated_Merged_WB_UN_data_with_NA.xlsx")
+
+updated_merged_wb_un_data_filled_iso <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/Matlab/The countries and democratic list check list/Updated_Merged_WB_UN_data_filled_ISO.xlsx")
+
+
+merged_wb_un_data_iso_marked <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/Matlab/The countries and democratic list check list/Merged_WB_UN_data_iso_marked.xlsx")
+
+#corrected_un_countries
+#country and ISO 3166-1_Alpha-3
+data_set_one <- corrected_un_countries %>% 
+  rename(
+    country = Country,
+    ISO_3166 = `ISO 3166-1_Alpha-3`)
+
+
+#corrected_un_countries 
+#country and ISO 3166-1_Alpha-3
+data_set_two <- updated_merged_wb_un_data_with_na
+data_set_two <- data_set_two%>%
+  rename(
+    country = country, 
+    ISO_3166 = `ISO.3166-1_Alpha-3`)
+#the names is the change correctelty
+
+#updated_merged_wb_un_data_filled_iso
+data_set_three <- updated_merged_wb_un_data_filled_iso 
+data_set_three <- data_set_three%>%
+  rename(
+    country = `Country name`, 
+    ISO_3166 = `ISO 3166-1 Alpha-3`)
+
+#merged_wb_un_data_iso_marked
+data_set_four <- merged_wb_un_data_iso_marked
+data_set_four <- data_set_four%>%
+  rename(
+    country = `Country name`, 
+    ISO_3166 = `ISO 3166-1 Alpha-3`)
+
+
+```
+
+
+```{r}
+
+# Step 1: Select only relevant columns ('country' and 'ISO_3166') from each dataset
+data_set_one <- data_set_one %>% select(country, ISO_3166)
+data_set_two <- data_set_two %>% select(country, ISO_3166)
+data_set_three <- data_set_three %>% select(country, ISO_3166)
+data_set_four <- data_set_four %>% select(country, ISO_3166)
+
+# Step 2: Bind all rows together and remove duplicates
+combined_data <- bind_rows(data_set_one, data_set_two, data_set_three, data_set_four) %>%
+  distinct() # Remove duplicate rows to keep unique country-ISO combinations
+
+# View the combined data frame
+print(combined_data)
+
+```
+
+
+```{r}
+
+print(combined_data)
+
+output_file_path <- "combined_countries_data.xlsx"
+write.xlsx(combined_data, file = output_file_path)
+
+print(paste("Excel file saved as:", output_file_path))
+
+
+```
+
+```{r}
+combined_countries_data<- read_excel("combined_countries_data.xlsx")
+
+
+# Define the list of LDC ISO codes
+ldc_codes <- c("AFG", "AGO", "BGD", "BEN", "BFA", "BDI", "KHM", "CAF", "TCD", "COM", 
+               "COD", "DJI", "ERI", "ETH", "GMB", "GIN", "GNB", "HTI", "KIR", "LAO", 
+               "LSO", "LBR", "MDG", "MWI", "MLI", "MRT", "MOZ", "MMR", "NPL", "NER", 
+               "RWA", "STP", "SEN", "SLE", "SLB", "SOM", "SSD", "SDN", "TLS", "TGO", 
+               "TUV", "UGA", "TZA", "YEM", "ZMB")
+
+# Add the LDC column to combined_data
+combined_countries_data <- combined_countries_data %>%
+  mutate(LDC = ifelse(`ISO code` %in% ldc_codes, 1, 0))
+
+
+  hpic_codes = c("AFG", "BEN", "BOL", "BFA", "BDI", "CMR", "CAF", "TCD", "COM", "COG", 
+               "COD", "CIV", "ETH", "GMB", "GHA", "GIN", "GNB", "GUY", "HTI", "HND", 
+               "LBR", "MDG", "MWI", "MLI", "MRT", "MOZ", "NIC", "NER", "RWA", "STP", 
+               "SEN", "SLE", "TZA", "TGO", "UGA", "ZMB")
+  
+#add the hpic_code
+  
+  combined_countries_data <-combined_countries_data %>% mutate(HPIC = ifelse(`ISO code` %in% hpic_codes, 1, 0 ))
+
+  
+un_Code = c(
+    "AFG", "ALB", "DZA", "AND", "AGO", "ATG", "ARG", "ARM", "AUS", "AUT", "AZE",
+    "BHS", "BHR", "BGD", "BRB", "BLR", "BEL", "BLZ", "BEN", "BTN", "BOL", "BIH",
+    "BWA", "BRA", "BRN", "BGR", "BFA", "BDI", "KHM", "CMR", "CAN", "CPV", "CAF",
+    "TCD", "CHL", "CHN", "COL", "COM", "COG", "CRI", "CIV", "HRV", "CUB", "CYP",
+    "CZE", "PRK", "COD", "DNK", "DJI", "DMA", "DOM", "ECU", "EGY", "SLV", "GNQ",
+    "ERI", "EST", "SWZ", "ETH", "FJI", "FIN", "FRA", "GAB", "GMB", "GEO", "DEU",
+    "GHA", "GRC", "GRD", "GTM", "GIN", "GNB", "GUY", "HTI", "HND", "HUN", "ISL",
+    "IND", "IDN", "IRN", "IRQ", "IRL", "ISR", "ITA", "JAM", "JPN", "JOR", "KAZ",
+    "KEN", "KIR", "KWT", "KGZ", "LAO", "LVA", "LBN", "LSO", "LBR", "LBY", "LIE",
+    "LTU", "LUX", "MDG", "MWI", "MYS", "MDV", "MLI", "MLT", "MHL", "MRT", "MUS",
+    "MEX", "FSM", "MCO", "MNG", "MNE", "MAR", "MOZ", "MMR", "NAM", "NRU", "NPL",
+    "NLD", "NZL", "NIC", "NER", "NGA", "MKD", "NOR", "OMN", "PAK", "PLW", "PAN",
+    "PNG", "PRY", "PER", "PHL", "POL", "PRT", "QAT", "KOR", "MDA", "ROU", "RUS",
+    "RWA", "KNA", "LCA", "VCT", "WSM", "SMR", "STP", "SAU", "SEN", "SRB", "SYC",
+    "SLE", "SGP", "SVK", "SVN", "SLB", "SOM", "ZAF", "SSD", "ESP", "LKA", "SDN",
+    "SUR", "SWE", "CHE", "SYR", "TJK", "THA", "TLS", "TGO", "TON", "TTO", "TUN",
+    "TUR", "TKM", "TUV", "UGA", "UKR", "ARE", "GBR", "TZA", "USA", "URY", "UZB",
+    "VUT", "VEN", "VNM", "YEM", "ZMB", "ZWE"
+  )
+
+  combined_countries_data <-combined_countries_data %>% mutate(UN = ifelse(`ISO code` %in% un_Code, 1, 0 ))
+
+```
+
+
+```{R}
+#Add the OECD countries in there
+ccombined_countries_LDC_HPIC_UN <- combined_countries
+
+#rename the ISO code
+ccombined_countries_LDC_HPIC_UN <- ccombined_countries_LDC_HPIC_UN %>% rename(ISO_code = `ISO code`)
+
+ccombined_countries_LDC_HPIC_UN_OECD <-ccombined_countries_LDC_HPIC_UN %>% mutate(OECD = ifelse(ISO_code %in% OECD_list.df$ISO_code, 1, 0 ))
+
+print(ccombined_countries_LDC_HPIC_UN_OECD)
+
+output_file_path <- "ccombined_countries_LDC_HPIC_UN_OECD.xlsx"
+write.xlsx(ccombined_countries_LDC_HPIC_UN_OECD, file = output_file_path)
+
+print(paste("Excel file saved as:", output_file_path))
+
+```
+
+
+```{R}
+
+ccombined_countries_LDC_HPIC_UN_OECD <- read_excel("ccombined_countries_LDC_HPIC_UN_OECD.xlsx")
+
+
+# Create a data frame with country names and ISO codes
+SIDS_countries_iso <- data.frame(
+  Country = c("Antigua and Barbuda", "Haiti", "Saint Kitts and Nevis", "Bahamas", "Jamaica", "Saint Lucia", 
+              "Barbados", "Belize", "Cabo Verde", "Comoros", "Cook Islands", "Cuba", "Dominica", 
+              "Dominican Republic", "Fiji", "Grenada", "Guinea-Bissau", "Kiribati", "Maldives", 
+              "Marshall Islands", "Micronesia", "Mauritius", "Nauru", "Niue", "Palau", 
+              "Papua New Guinea", "Samoa", "São Tomé and Príncipe", "Saint Vincent and the Grenadines", 
+              "Seychelles", "Solomon Islands", "Suriname", "Timor-Leste", "Tonga", 
+              "Trinidad and Tobago", "Tuvalu", "Vanuatu", "Guyana", "Timor-Leste"),
+  ISO_Code = c("ATG", "HTI", "KNA", "BHS", "JAM", "LCA", "BRB", "BLZ", "CPV", "COM", 
+               "COK", "CUB", "DMA", "DOM", "FJI", "GRD", "GNB", "KIR", "MDV", 
+               "MHL", "FSM", "MUS", "NRU", "NIU", "PLW", "PNG", "WSM", "STP", 
+               "VCT", "SYC", "SLB", "SUR", "TLS", "TON", "TTO", "TUV", "VUT", "GUY","TLS")
+)
+
+# Print the data frame
+print(countries_iso)
+
+LDC_HPIC_UN_OECD_SIDS <- ccombined_countries_LDC_HPIC_UN_OECD %>% mutate(SIDS = ifelse(ISO_code %in% SIDS_countries_iso$ISO_Code, 1, 0 ))
+
+#print the outcome
+print(LDC_HPIC_UN_OECD_SIDS)
+```
+
+
+
+
+
+```{r}
+
+# Load necessary library
+library(dplyr)
+
+# Create data frame with countries and ISO codes
+landlocked_developing_countries <- data.frame(
+  Region = c("Africa", "Africa", "Africa", "Africa", "Africa", "Africa", "Africa", "Africa", "Africa", 
+             "Africa", "Africa", "Africa", "Africa", "Africa", "Africa", "Africa",
+             "Asia", "Asia", "Asia", "Asia", "Asia", "Asia", "Asia", "Asia", "Asia", "Asia",
+             "Europe", "Europe", "Europe", "Europe",
+             "Latin America", "Latin America"),
+  Country = c("Botswana", "Burkina Faso", "Burundi", "Central African Republic", "Chad", "Ethiopia", 
+              "Lesotho", "Malawi", "Mali", "Niger", "Rwanda", "South Sudan", "Eswatini", "Uganda", 
+              "Zambia", "Zimbabwe", "Afghanistan", "Bhutan", "Kazakhstan", "Kyrgyzstan", "Laos", 
+              "Mongolia", "Nepal", "Tajikistan", "Turkmenistan", "Uzbekistan", "Armenia", "Azerbaijan", 
+              "North Macedonia", "Moldova", "Bolivia", "Paraguay"),
+  ISO_Code = c("BWA", "BFA", "BDI", "CAF", "TCD", "ETH", "LSO", "MWI", "MLI", "NER", "RWA", "SSD", 
+               "SWZ", "UGA", "ZMB", "ZWE", "AFG", "BTN", "KAZ", "KGZ", "LAO", "MNG", "NPL", "TJK", 
+               "TKM", "UZB", "ARM", "AZE", "MKD", "MDA", "BOL", "PRY")
+)
+
+# Print the data frame
+print(landlocked_developing_countries)
+
+LDC_HPIC_UN_OECD_SIDS_LLDC <- LDC_HPIC_UN_OECD_SIDS %>% mutate(LLDC = ifelse(ISO_code %in% landlocked_developing_countries$ISO_Code, 1, 0 ))
+
+```
+
+
+```{R}
+
+# Create data frame with advanced economies and their ISO codes
+advanced_economies <- data.frame(
+  Country = c("Andorra", "Australia", "Austria", "Belgium", "Canada", "Croatia", "Cyprus", 
+              "Czech Republic", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", 
+              "Hong Kong SAR", "Iceland", "Ireland", "Israel", "Italy", "Japan", "Korea", 
+              "Latvia", "Lithuania", "Luxembourg", "Macao SAR", "Malta", "Netherlands", 
+              "New Zealand", "Norway", "Portugal", "Puerto Rico", "San Marino", "Singapore", 
+              "Slovak Republic", "Slovenia", "Spain", "Sweden", "Switzerland", 
+              "Taiwan Province of China", "United Kingdom", "United States"),
+  ISO_Code = c("AND", "AUS", "AUT", "BEL", "CAN", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", 
+               "FRA", "DEU", "GRC", "HKG", "ISL", "IRL", "ISR", "ITA", "JPN", "KOR", "LVA", 
+               "LTU", "LUX", "MAC", "MLT", "NLD", "NZL", "NOR", "PRT", "PRI", "SMR", "SGP", 
+               "SVK", "SVN", "ESP", "SWE", "CHE", "TWN", "GBR", "USA")
+)
+
+# Print the data frame
+print(advanced_economies)
+
+LDC_HPIC_UN_OECD_SIDS_LLDC_AE <- LDC_HPIC_UN_OECD_SIDS_LLDC %>% mutate(AE = ifelse(ISO_code %in% advanced_economies$ISO_Code, 1, 0 ))
+
+
+UN_AE_LDC_HPIC_SIDS_LLDC_OECD <- LDC_HPIC_UN_OECD_SIDS_LLDC_AE %>% 
+  select(country, ISO_code, UN, AE, LDC, HPIC, SIDS, LLDC, OECD)
+
+# Print the reordered data frame
+print(UN_AE_LDC_HPIC_SIDS_LLDC_OECD)
+
+
+Corrected_UN_countries_list_with_ISO_codes.xlsx
+
+
+```
+
+
+
+```{r}
+#now, its the time to deal with the democeratic statstis
+
+#lode the data 
+
+library(readxl)
+library(readr)
+
+Cleaned_Democracy_Data <- read_csv("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/The countries and democratic list check list/Cleaned_Democracy_Data.csv")
+
+Corrected_UN_countries_list_with_ISO_codes <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/The countries and democratic list check list/Corrected_UN_countries_list_with_ISO_codes.xlsx")
+
+Merged_WB_UN_data_iso_marked <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/The countries and democratic list check list/Merged_WB_UN_data_iso_marked.xlsx")
+
+Updated_Merged_WB_UN_data_filled_ISO <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/The countries and democratic list check list/Updated_Merged_WB_UN_data_filled_ISO.xlsx")
+
+Updated_Merged_WB_UN_data_with_NA <- read_excel("~/Library/CloudStorage/OneDrive-CarletonUniversity/The GDP data cleaning-TIEMA/R code for the country list cleaning/The countries and democratic list check list/Updated_Merged_WB_UN_data_with_NA.xlsx")
+
+#rename those file 
+Democratic_one <- Cleaned_Democracy_Data
+Democratic_two <- Corrected_UN_countries_list_with_ISO_codes
+Democratic_three <- Merged_WB_UN_data_iso_marked 
+Democratic_four <- Updated_Merged_WB_UN_data_filled_ISO 
+Democratic_five <- Updated_Merged_WB_UN_data_with_NA 
+
+
+```
+
+```{R}
+
+
+# Define the function to rename columns
+rename_columns <- function(data) {
+  data %>%
+    rename(
+      ISO_code = `ISO.3166-1_Alpha-3`,
+      EIU = `2023_EIU_democracy_index`,
+      LOD = `2023_level_of_democracy`
+    )
+}
+
+# Example of using the function
+# renamed_data <- rename_columns(your_data)
+# print(renamed_data)
+
+```
+
+
+```{r}
+
+Democratic_one <- Cleaned_Democracy_Data
+Democratic_two <- Corrected_UN_countries_list_with_ISO_codes
+Democratic_three <- Merged_WB_UN_data_iso_marked 
+Democratic_four <- Updated_Merged_WB_UN_data_filled_ISO 
+Democratic_five <- Updated_Merged_WB_UN_data_with_NA 
+
+
+Democratic_one_rename <- rename_columns(Democratic_one)
+Democratic_three_rename <- rename_columns(Democratic_three)
+Democratic_four_rename <- rename_columns(Democratic_four)
+Democratic_five_rename <- rename_columns(Democratic_five)
+
+Democratic_two_rename <- Democratic_two_rename %>%
+  rename(
+      EIU = EDI,
+      LOD = EDI_LEVEL
+    )
+  
+
+
+
+```
+
+```{r}
+# 将所有数据框放入一个列表
+data_frames <- list(
+  Democratic_one_rename,
+  Democratic_two_rename,
+  Democratic_three_rename,
+  Democratic_four_rename,
+  Democratic_five_rename
+)
+
+# 使用 reduce 进行多次 left_join 并合并 EIU 和 LOD 列
+combined_democratic_data <- reduce(data_frames, function(x, y) {
+  # 左连接两个数据框
+  merged <- left_join(x, y, by = "ISO_code", suffix = c("", ".new"))
+  
+  # 合并 EIU 和 LOD 列（确保数据类型一致）
+  merged <- merged %>%
+    mutate(
+      EIU = coalesce(as.numeric(EIU), as.numeric(`EIU.new`)),
+      LOD = coalesce(as.numeric(LOD), as.numeric(`LOD.new`))
+    ) %>%
+    
+    # 选择最终想要保留的列，避免重复列堆积
+    select(ISO_code, Country, EIU, LOD, Development_Status, Democracy_Level)
+  
+  return(merged)
+})
+
+# 打印最终的合并数据
+print(combined_democratic_data)
+
+output_file_path <- "democratic_data.xlsx"
+write.xlsx(combined_democratic_data, file = output_file_path)
+
+print(paste("Excel file saved as:", output_file_path))
+
+```
+
+```{r}
+democratic_data <- read_excel("democratic_data.xlsx")
+
+
+# Assume your data frame is named `data`
+UN_AE_LDC_HPIC_SIDS_LLDC_OECD <-UN_AE_LDC_HPIC_SIDS_LLDC_OECD %>%
+  mutate(
+    ISO_code = case_when(
+      country == "Congo, Dem. Rep." ~ "COD",  # Democratic Republic of the Congo
+      country == "Congo, Rep." ~ "COG",       # Republic of the Congo
+      TRUE ~ ISO_code  # Keep existing ISO_code values for other countries
+    )
+  )
+
+
+
+UN_AE_LDC_HPIC_SIDS_LLDC_OECD_EIU <- UN_AE_LDC_HPIC_SIDS_LLDC_OECD %>%
+  left_join(democratic_data,
+            select(ISO_code, EIU),
+            by = c("ISO_code")) %>% select(-Country)
+  
+
+print(UN_AE_LDC_HPIC_SIDS_LLDC_OECD_EIU)
+
+
+# Save OECD_data.pr to an Excel file
+write.xlsx(UN_AE_LDC_HPIC_SIDS_LLDC_OECD_EIU, "UN_AE_LDC_HPIC_SIDS_LLDC_OECD_EIU.xlsx", overwrite = TRUE)
+```
+

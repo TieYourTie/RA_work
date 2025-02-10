@@ -1,0 +1,405 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%graphy for the WB-HP 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 1. Setup and Data Loading
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Get the current working directory
+current_folder = pwd;
+
+% Set the data folder path
+data_folder = fullfile(current_folder, 'data');
+
+% Set the functions folder path and add it to the search path
+functions_folder = fullfile(current_folder, 'functions');
+addpath(functions_folder);
+
+% Set the file path
+WB_data_file = fullfile(data_folder, 'WB_data_pr.xlsx');
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Step 1: Load the data
+data_HP = readtable('WB_stage_one_regresison_HP.xlsx');
+
+% Step 2: Extract relevant columns
+Countries = data_HP.Country;
+Persistence_effect = data_HP.Persistence_effect;
+AverageInflation = data_HP.AverageInflation;
+Impact_Effect = data_HP.Impact_effect;
+
+% Step 3: Identify duplicate entries and keep only the first occurrence
+[~, uniqueIdx] = unique(Countries, 'first'); % Find the first occurrence of each country
+
+% Step 4: Sort the indices to maintain the original order
+uniqueIdx = sort(uniqueIdx);
+
+% Step 5: Filter all related data to keep only unique entries
+Countries = Countries(uniqueIdx);
+Persistence_effect = Persistence_effect(uniqueIdx);
+AverageInflation = AverageInflation(uniqueIdx);
+Impact_Effect = Impact_Effect(uniqueIdx);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Step 2: Extract Relevant Columns
+Persistence_effect = data_HP.Persistence_effect;
+AverageInflation = data_HP.AverageInflation;
+Impact_Effect = data_HP.Impact_effect
+
+Countries = data_HP.Country;
+
+% Step 3: Handle Missing Data
+validData = ~isnan(Persistence_effect) & ~isnan(AverageInflation);
+Persistence_effect = Persistence_effect(validData);
+AverageInflation = AverageInflation(validData);
+Countries = Countries(validData);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Step 4: Calculate Summary Statistics
+numCountries = length(Countries);
+avgInflation = mean(AverageInflation);
+avgPersistence = mean(Persistence_effect);
+avgImpactEffect = mean(Impact_Effect)
+
+
+% Step 5: Fit a Linear Regression Line
+coefficients = polyfit(AverageInflation, Persistence_effect, 1); % Linear fit
+fit_line = polyval(coefficients, AverageInflation); % Generate regression line
+
+% Step 4: Perform Linear Regression
+mdl = fitlm(AverageInflation, Persistence_effect, 'linear'); % Fit linear model
+coefficients = mdl.Coefficients.Estimate; % Extract coefficients
+fit_line = predict(mdl, AverageInflation); % Generate fitted values
+
+% Display regression results in command window
+disp(mdl);
+
+% Step 6: Plot the Data and Regression Line
+fig = figure('Name', 'WB HP Persistence_Effect', 'NumberTitle', 'off'); % Set figure name
+scatter(AverageInflation, Persistence_effect, 'filled'); % Scatter plot
+hold on;
+plot(AverageInflation, fit_line, '-r', 'LineWidth', 2); % Regression line
+xlabel('Average Inflation (%)');
+ylabel('Persistence Effect');
+title('Persistence Effect vs. Average Inflation(WB HP)');
+grid on;
+legend('Data Points', 'Linear Fit', 'Location', 'best');
+hold off;
+
+% Step 8: Add Country Names as Text Labels
+hold on;
+for i = 1:length(Countries)
+    text(AverageInflation(i), Persistence_effect(i), Countries{i}, ...
+        'FontSize', 8, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
+end
+hold off;
+
+annotationText = sprintf('Number of Countries: %d\nAverage Inflation: %.2f\nAverage Persistence Effect: %.2f', ...
+    numCountries, avgInflation, avgPersistence);
+
+% Position the annotation text dynamically
+text_x = min(AverageInflation) + 0.05 * range(AverageInflation);
+text_y = max(Persistence_effect) - 0.1 * range(Persistence_effect);
+
+% Add annotation text to the plot
+text(text_x, text_y, annotationText, ...
+    'FontSize', 10, 'BackgroundColor', 'white', 'EdgeColor', 'black', ...
+    'HorizontalAlignment', 'left', 'VerticalAlignment', 'top');
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%WB-HP-IMPACT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Step 2: Extract Relevant Columns
+Persistence_effect = data_HP.Persistence_effect;
+AverageInflation = data_HP.AverageInflation;
+Impact_Effect = data_HP.Impact_effect;
+OECD = data_HP.OECD;
+Countries = data_HP.Country;
+
+% Step 3: Handle Missing Data
+validData = ~isnan(Impact_Effect) & ~isnan(AverageInflation);
+Impact_Effect = Impact_Effect(validData);
+AverageInflation = AverageInflation(validData);
+Countries = Countries(validData);
+
+% Step 4: Calculate Summary Statistics
+numCountries = length(Countries);
+avgInflation = mean(AverageInflation);
+avgImpactEffect = mean(Impact_Effect);
+
+% Step 4: Perform Linear Regression
+mdl = fitlm(AverageInflation, Impact_Effect, 'linear'); % Fit linear model
+coefficients = mdl.Coefficients.Estimate; % Extract coefficients
+fit_line = predict(mdl, AverageInflation); % Generate fitted values
+
+% Display regression results in command window
+disp(mdl);
+
+
+% Step 5: Fit a Linear Regression Line
+coefficients = polyfit(AverageInflation, Impact_Effect, 1); % Linear fit
+fit_line = polyval(coefficients, AverageInflation); % Generate regression line
+
+% Step 6: Plot the Data and Regression Line
+fig = figure('Name', 'WB_HP_Impact_Effect', 'NumberTitle', 'off'); % Set figure name
+scatter(AverageInflation, Impact_Effect, 'filled'); % Scatter plot
+hold on;
+plot(AverageInflation, fit_line, '-r', 'LineWidth', 2); % Regression line
+xlabel('Average Inflation (%)');
+ylabel('Impact Effect');
+title('Impact Effect vs. Average Inflation(WB HP)');
+grid on;
+legend('Data Points', 'Linear Fit', 'Location', 'best');
+hold off;
+
+
+% Step 8: Add Country Names as Text Labels
+hold on;
+for i = 1:length(Countries)
+    text(AverageInflation(i), Persistence_effect(i), Countries{i}, ...
+        'FontSize', 8, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
+end
+hold off;
+
+annotationText = sprintf('Number of Countries: %d\nAverage Inflation: %.2f\nAverage Persistence Effect: %.2f', ...
+    numCountries, avgInflation, avgPersistence);
+
+% Position the annotation text dynamically
+text_x = min(AverageInflation) + 0.05 * range(AverageInflation);
+text_y = max(Persistence_effect) - 0.1 * range(Persistence_effect);
+
+% Add annotation text to the plot
+text(text_x, text_y, annotationText, ...
+    'FontSize', 10, 'BackgroundColor', 'white', 'EdgeColor', 'black', ...
+    'HorizontalAlignment', 'left', 'VerticalAlignment', 'top');
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%WB-HP-OECD/non-OECD
+    %WB-HP-OECD
+        %WB-HP-OECD-PRESITENCE
+        %WB-HP-OECD-IMPACT
+    %WB-HP-nonOECD
+        %WB-HP-nonOECD-PRESITENCE
+        %WB-HP-nonOECD-IMPACT
+       
+        
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Step 3: Handle Missing Data
+validData = ~isnan(Persistence_effect) & ~isnan(AverageInflation) & ~isnan(OECD);
+Persistence_effect = Persistence_effect(validData);
+AverageInflation = AverageInflation(validData);
+Impact_Effect = Impact_Effect(validData);
+OECD = OECD(validData);
+Countries = Countries(validData);
+
+% Filter data for OECD = 1
+oecd1_idx = OECD == 1;
+Persistence_effect_OECD1 = Persistence_effect(oecd1_idx);
+AverageInflation_OECD1 = AverageInflation(oecd1_idx);
+Impact_Effect_OECD1 = Impact_Effect(oecd1_idx);
+Countries_OECD1 = Countries(oecd1_idx);
+
+
+% Filter data for OECD = 0
+oecd0_idx = OECD == 0;
+Persistence_effect_OECD0 = Persistence_effect(oecd0_idx);
+AverageInflation_OECD0 = AverageInflation(oecd0_idx);
+Impact_Effect_OECD0 = Impact_Effect(oecd0_idx);
+Countries_OECD0 = Countries(oecd0_idx);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%WB-HP-OECD-PRESITENCE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+fig1 = figure('Name', 'WB_HP_Persistence_Effect_OECD', 'NumberTitle', 'off');
+scatter(AverageInflation_OECD1, Persistence_effect_OECD1, 'filled');
+hold on;
+
+% Calculate linear fit
+coefficients = polyfit(AverageInflation_OECD1, Persistence_effect_OECD1, 1);
+fit_line = polyval(coefficients, AverageInflation_OECD1);
+plot(AverageInflation_OECD1, fit_line, '-r', 'LineWidth', 2);
+
+% Calculate statistics
+num_countries = length(Countries_OECD1);
+avg_inflation = mean(AverageInflation_OECD1, 'omitnan');
+avg_persistence = mean(Persistence_effect_OECD1, 'omitnan');
+
+% Step 4: Perform Linear Regression
+mdl = fitlm(AverageInflation_OECD1, Persistence_effect_OECD1, 'linear'); % Fit linear model
+coefficients = mdl.Coefficients.Estimate; % Extract coefficients
+fit_line = predict(mdl, AverageInflation); % Generate fitted values
+
+% Display regression results in command window
+disp(mdl);
+
+% Add statistics to the plot
+stats_text = sprintf('Number of Countries: %d\nAverage Inflation: %.2f%%\nAverage Persistence: %.2f', ...
+    num_countries, avg_inflation, avg_persistence);
+text_x = min(AverageInflation_OECD1) + 0.05 * range(AverageInflation_OECD1);
+text_y = max(Persistence_effect_OECD1) - 0.05 * range(Persistence_effect_OECD1);
+text(text_x, text_y, stats_text, 'FontSize', 10, 'BackgroundColor', 'white', 'EdgeColor', 'black');
+
+% Labels and title
+xlabel('Average Inflation (%)');
+ylabel('Persistence Effect');
+title('Persistence Effect vs. Average Inflation (WB HP OECD)');
+grid on;
+legend('Data Points', 'Linear Fit', 'Location', 'best');
+
+% Add country names as labels
+for i = 1:length(Countries_OECD1)
+    text(AverageInflation_OECD1(i), Persistence_effect_OECD1(i), Countries_OECD1{i}, ...
+        'FontSize', 8, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% WB-HP-OECD-IMPACT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Create figure and scatter plot
+fig2 = figure('Name', 'WB_HP_Impact_Effect_OECD', 'NumberTitle', 'off');
+scatter(AverageInflation_OECD1, Impact_Effect_OECD1, 'filled');
+hold on;
+
+% Perform linear fit and plot the regression line
+coefficients = polyfit(AverageInflation_OECD1, Impact_Effect_OECD1, 1);
+fit_line = polyval(coefficients, AverageInflation_OECD1);
+plot(AverageInflation_OECD1, fit_line, '-r', 'LineWidth', 2);
+
+% Calculate and display statistics
+num_countries = length(Countries_OECD1);
+avg_inflation = mean(AverageInflation_OECD1, 'omitnan');
+avg_impact_effect = mean(Impact_Effect_OECD1, 'omitnan');
+
+% Step 4: Perform Linear Regression
+mdl = fitlm(AverageInflation_OECD1, Impact_Effect_OECD1, 'linear'); % Fit linear model
+coefficients = mdl.Coefficients.Estimate; % Extract coefficients
+fit_line = predict(mdl, AverageInflation); % Generate fitted values
+
+% Display regression results in command window
+disp(mdl);
+
+% Add statistical annotations
+stats_text = sprintf('Number of Countries: %d\nAverage Inflation: %.2f%%\nAverage Impact Effect: %.2f', ...
+    num_countries, avg_inflation, avg_impact_effect);
+text_x = min(AverageInflation_OECD1) + 0.05 * range(AverageInflation_OECD1);
+text_y = max(Impact_Effect_OECD1) - 0.05 * range(Impact_Effect_OECD1);
+text(text_x, text_y, stats_text, 'FontSize', 10, 'BackgroundColor', 'white', 'EdgeColor', 'black');
+
+% Set plot labels and title
+xlabel('Average Inflation (%)');
+ylabel('Impact Effect');
+title('Impact Effect vs. Average Inflation (WB HP OECD)');
+grid on;
+
+% Add legend
+legend('Data Points', 'Linear Fit', 'Location', 'best');
+
+% Annotate points with country names
+for i = 1:length(Countries_OECD1)
+    text(AverageInflation_OECD1(i), Impact_Effect_OECD1(i), Countries_OECD1{i}, ...
+        'FontSize', 8, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
+end
+
+hold off;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Step 6: Plot Persistence Effect vs Average Inflation (OECD = 0)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %WB-HP-nonOECD
+        %WB-HP-nonOECD-PRESITENCE
+        %WB-HP-nonOECD-IMPACT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+       
+% Create figure and scatter plot
+fig3 = figure('Name', 'WB_HP_Persistence_Effect_nonOECD', 'NumberTitle', 'off');
+scatter(AverageInflation_OECD0, Persistence_effect_OECD0, 'filled');
+hold on;
+
+% Perform linear fit and plot the regression line
+coefficients = polyfit(AverageInflation_OECD0, Persistence_effect_OECD0, 1);
+fit_line = polyval(coefficients, AverageInflation_OECD0);
+plot(AverageInflation_OECD0, fit_line, '-r', 'LineWidth', 2);
+
+% Calculate and display statistics
+num_countries = length(Countries_OECD0);
+avg_inflation = mean(AverageInflation_OECD0, 'omitnan');
+avg_persistence = mean(Persistence_effect_OECD0, 'omitnan');
+
+% Add statistical annotations
+stats_text = sprintf('Number of Countries: %d\nAverage Inflation: %.2f%%\nAverage Persistence: %.2f', ...
+    num_countries, avg_inflation, avg_persistence);
+text_x = min(AverageInflation_OECD0) + 0.05 * range(AverageInflation_OECD0);
+text_y = max(Persistence_effect_OECD0) - 0.05 * range(Persistence_effect_OECD0);
+text(text_x, text_y, stats_text, 'FontSize', 10, 'BackgroundColor', 'white', 'EdgeColor', 'black');
+
+% Set plot labels and title
+xlabel('Average Inflation (%)');
+ylabel('Persistence Effect');
+title('WB HP Persistence Effect vs. Average Inflation (WB HP nonOECD)');
+grid on;
+
+% Add legend
+legend('Data Points', 'Linear Fit', 'Location', 'best');
+
+% Annotate points with country names
+for i = 1:length(Countries_OECD0)
+    text(AverageInflation_OECD0(i), Persistence_effect_OECD0(i), Countries_OECD0{i}, ...
+        'FontSize', 8, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
+end
+
+hold off;
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% WB-HP-nonOECD-IMPACT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Create figure and scatter plot
+fig4 = figure('Name', 'WB_HP_Impact_Effect_nonOECD', 'NumberTitle', 'off');
+scatter(AverageInflation_OECD0, Impact_Effect_OECD0, 'filled');
+hold on;
+
+% Perform linear fit and plot regression line
+coefficients = polyfit(AverageInflation_OECD0, Impact_Effect_OECD0, 1);
+fit_line = polyval(coefficients, AverageInflation_OECD0);
+plot(AverageInflation_OECD0, fit_line, '-r', 'LineWidth', 2);
+
+% Calculate and display statistics
+num_countries = length(Countries_OECD0);
+avg_inflation = mean(AverageInflation_OECD0, 'omitnan');
+avg_impact_effect = mean(Impact_Effect_OECD0, 'omitnan');
+
+% Add statistical annotations
+stats_text = sprintf('Number of Countries: %d\nAverage Inflation: %.2f%%\nAverage Impact Effect: %.2f', ...
+    num_countries, avg_inflation, avg_impact_effect);
+text_x = min(AverageInflation_OECD0) + 0.05 * range(AverageInflation_OECD0);
+text_y = max(Impact_Effect_OECD0) - 0.05 * range(Impact_Effect_OECD0);
+text(text_x, text_y, stats_text, 'FontSize', 10, 'BackgroundColor', 'white', 'EdgeColor', 'black');
+
+% Set plot labels and title
+xlabel('Average Inflation (%)');
+ylabel('Impact Effect');
+title('WB HP Impact Effect vs. Average Inflation (WB HP nonOECD)');
+grid on;
+
+% Add legend
+legend('Data Points', 'Linear Fit', 'Location', 'best');
+
+% Annotate points with country names
+for i = 1:length(Countries_OECD0)
+    text(AverageInflation_OECD0(i), Impact_Effect_OECD0(i), Countries_OECD0{i}, ...
+        'FontSize', 8, 'HorizontalAlignment', 'right', 'VerticalAlignment', 'bottom');
+end
+
+hold off;
+
+
+

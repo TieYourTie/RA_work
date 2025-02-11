@@ -29,16 +29,6 @@ The project involves collecting, cleaning, processing, and visualizing GDP data 
 
 ---
 
-## ⚡ Challenges & Solutions  
-
-### 🛑 Problem  
-When working with multiple datasets, inconsistent naming conventions across sources created **integration issues**.  
-
-### 💡 Solution  
-Developed a **dictionary-based program** in **R and MATLAB** that **maps inconsistent country and variable names**, allowing for efficient **cross-dataset processing** and **improving data integrity**.  
-
----
-
 ## 📂 Repository Structure  
 
 ```plaintext

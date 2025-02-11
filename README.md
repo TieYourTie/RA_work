@@ -43,7 +43,8 @@ Developed a **dictionary-based program** in **R and MATLAB** that **maps inconsi
 
 ```plaintext
 📦 project-root  
- ┣ 📂 data/                 # Raw and processed datasets  
- ┣ 📂 scripts/              # R and MATLAB scripts  
- ┣ 📜 README.md             # Project documentation  
- ┗ 📜 requirements.txt      # Dependencies (if applicable)  
+ ┣ 📂 data/                 # Raw and processed datasets  (empty due to the size limit)
+ ┣ 📂 Matlab code/          #The matlab code without data
+ ┣ 📂 R code/               # R code
+ ┣ 📜 README.md             # Project documentation  (the one you read now!) 
+ 

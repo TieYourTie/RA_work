@@ -34,7 +34,10 @@ The project involves collecting, cleaning, processing, and visualizing GDP data 
 ```plaintext
 📦 project-root  
  ┣ 📂 data/                 # Raw and processed datasets  (empty due to the size limit)
- ┣ 📂 Matlab code/          #The matlab code without data
- ┣ 📂 R code/               # R code
+ ┣ 📂 Matlab code/          # The matlab code without data
+ ┣ 📂 R code/               # R code without data
  ┣ 📜 README.md             # Project documentation  (the one you read now!) 
  
+
+## You Can access functional code at following link
+https://drive.google.com/drive/folders/1EBEkYR8R89uoUFxWjim03I1cNdPIhSMB?usp=share_link
